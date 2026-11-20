@@ -174,6 +174,29 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 .wrap{padding-bottom:calc(40px + var(--safe-area-inset-bottom,env(safe-area-inset-bottom)))}
 .side-head{padding-top:calc(16px + var(--safe-area-inset-top,env(safe-area-inset-top)))}
 .tapbal{cursor:pointer;user-select:none;-webkit-user-select:none}
+/* bank-card style account tiles */
+.bcard{position:relative;aspect-ratio:1.586;border-radius:16px;padding:16px 18px;color:#fff;cursor:pointer;overflow:hidden;
+  box-shadow:0 6px 16px rgba(0,0,0,.18);display:flex;flex-direction:column;justify-content:space-between;transition:transform .15s}
+.bcard:active{transform:scale(.98)}
+.bcard::before{content:"";position:absolute;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.08);right:-90px;top:-120px}
+.bcard::after{content:"";position:absolute;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.06);left:-60px;bottom:-120px}
+.bcard>*{position:relative;z-index:1}
+.bc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.bc-bank{font-weight:800;font-size:16px;letter-spacing:.5px;text-transform:uppercase;line-height:1.1}
+.bc-name{font-size:12px;opacity:.85;margin-top:3px}
+.bc-type{font-size:11px;font-weight:700;letter-spacing:1.5px;opacity:.9;border:1px solid rgba(255,255,255,.5);border-radius:6px;padding:2px 6px}
+.bc-mid{display:flex;align-items:center;gap:12px}
+.bc-chip{width:38px;height:28px;border-radius:6px;background:linear-gradient(135deg,#f6dd8f,#c9a24a 55%,#f0d58a);box-shadow:inset 0 0 0 1px rgba(0,0,0,.15);flex:none;position:relative}
+.bc-chip::after{content:"";position:absolute;inset:6px 9px;border:1px solid rgba(0,0,0,.25);border-radius:3px}
+.bc-wave{font-size:18px;opacity:.85;transform:rotate(90deg)}
+.bc-num{font-family:"Courier New",ui-monospace,monospace;font-size:17px;letter-spacing:2px;font-weight:700;text-shadow:0 1px 1px rgba(0,0,0,.25);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bc-bot{display:flex;justify-content:space-between;align-items:flex-end;gap:8px}
+.bc-lbl{font-size:10px;letter-spacing:1px;text-transform:uppercase;opacity:.8}
+.bc-bal{font-size:22px;font-weight:700;margin-top:2px}
+.bc-pend{font-size:11px;background:rgba(255,255,255,.2);border-radius:10px;padding:3px 8px;font-weight:600;white-space:nowrap}
+.swatches{display:flex;flex-wrap:wrap;gap:10px}
+.swatches button{width:34px;height:34px;border-radius:50%;border:3px solid transparent;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.swatches button.on{border-color:var(--text)}
 .masked{letter-spacing:1px;opacity:.9}
 .native .printBtn{display:none!important}
 .stbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
@@ -267,8 +290,8 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
     <div id="updBar"></div>
     <div id="pendBar"></div>
     <div class="cards">
-      <div class="card tapbal"><div class="lbl">Balance in Accounts</div><div class="val blue" id="tBal">0</div></div>
-      <div class="card tapbal"><div class="lbl">Sunnah Balance</div><div class="val purple" id="tSun">0</div></div>
+      <div class="card tapbal" data-k="tBal"><div class="lbl">Balance in Accounts</div><div class="val blue" id="tBal">0</div></div>
+      <div class="card tapbal" data-k="tSun"><div class="lbl">Sunnah Balance</div><div class="val purple" id="tSun">0</div></div>
       <div class="card"><div class="lbl">Incentive Received</div><div class="val green" id="tInc">0</div></div>
       <div class="card"><div class="lbl">Paid to Sunnah</div><div class="val red" id="tPaid">0</div></div>
     </div>
@@ -286,7 +309,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
     <div id="tab-sunnah" style="display:none"><div class="split"><div>
       <div class="hero cash">
         <div class="n">Sunnah</div>
-        <div class="big tapbal" id="sBalS">0</div><div class="lb">Sunnah Balance</div>
+        <div class="big tapbal" data-k="sun" id="sBalS">0</div><div class="lb">Sunnah Balance</div>
         <div class="sub2"><div>Received<b id="sGot">0</b></div><div>Paid<b id="sPaid">0</b></div></div>
       </div>
       <div class="row">
@@ -335,7 +358,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
       </div>
     </div>
     <div class="split"><div>
-    <div class="hero">
+    <div class="hero" id="stHero">
       <div class="n" id="sName"></div>
       <div class="t" id="sMeta"></div>
       <div class="big tapbal" id="sBal">0</div><div class="lb">Available balance</div>
@@ -368,6 +391,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
   <div class="f"><label>Account Name *</label><input id="aName"></div>
   <div class="f"><label>Account Number</label><input id="aNum"></div>
   <div class="f"><label>Bank / Type</label><input id="aBank"></div>
+  <div class="f"><label>Card Colour</label><div class="swatches" id="aColors"></div></div>
   <div class="f"><label>Opening Balance (optional)</label><input type="number" id="aOpen" placeholder="0"><div class="hint" id="aOpenHint"></div></div>
   <div class="mbtns"><button class="btn btn-o" onclick="closeModal('accModal')">Cancel</button><button class="btn btn-p" onclick="saveAccount()">Save</button></div>
 </div></div>
@@ -477,11 +501,18 @@ function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');set
 const accOf=id=>db.accounts.find(a=>a.id===id);
 const accName=id=>(accOf(id)||{name:'(deleted account)'}).name;
 const last4=n=>n?' (...'+String(n).slice(-4)+')':'';
+// card colours (gradients); each account keeps its own, default picked from its id
+const CARD_COLORS=['#0b3d75,#1565c0','#1b5e20,#43a047','#6a1b9a,#ab47bc','#b71c1c,#e53935','#e65100,#fb8c00','#004d40,#00897b','#263238,#546e7a','#880e4f,#d81b60','#1a237e,#5c6bc0','#3e2723,#8d6e63'];
+function cardColor(a){if(a.color!=null&&CARD_COLORS[a.color])return CARD_COLORS[a.color];let h=0;for(const c of String(a.id))h=(h*31+c.charCodeAt(0))>>>0;return CARD_COLORS[h%CARD_COLORS.length];}
+const cardBg=a=>'linear-gradient(135deg,'+cardColor(a)+')';
+// account number shown in card-number style: groups of 4
+const cardNum=n=>{const d=String(n||'').replace(/\s+/g,'');return d?d.replace(/(.{4})(?=.)/g,'$1 '):'•••• •••• •••• ••••';};
 const incOf=t=>t.inc!=null?t.inc:r2(t.amount*db.rate/100);
-let balShown=false,balTimer=null;
-const balHidden=()=>db.hideBal!==false&&!balShown;
-const balTxt=n=>balHidden()?'৳ •••••':tk(n);
-const balHtml=n=>balHidden()?'<span class="masked">৳ •••••</span>':tk(n);
+// Balances stay masked until tapped; each tap reveals only that balance (keyed) for 10 seconds.
+const shownBal=new Map();
+const balHidden=k=>db.hideBal!==false&&!shownBal.has(k);
+const balTxt=(n,k)=>balHidden(k)?'৳ •••••':tk(n);
+const balHtml=(n,k)=>balHidden(k)?'<span class="masked">৳ •••••</span>':tk(n);
 const byTime=(a,b)=>a.date===b.date?(a.created||0)-(b.created||0):(a.date<b.date?-1:1);
 
 /* ---------- storage ---------- */
@@ -539,13 +570,13 @@ function allEvents(){
 
 /* ---------- bank-style ledger renderer ---------- */
 // rows: newest first, each {date,title,sub,amt,bal,cls}
-function ledgerHTML(rows,emptyMsg){
+function ledgerHTML(rows,emptyMsg,pref){
   if(!rows.length)return `<div class="empty" style="border:0">${emptyMsg||'No transactions'}</div>`;
   let html='',last=null;
-  rows.forEach(r=>{
+  rows.forEach((r,i)=>{const k=(pref||'lg')+':'+(rows.length-i);
     if(r.date!==last){html+=`<div class="lg-h">${fmtD(r.date)}</div>`;last=r.date;}
     html+=`<div class="tx ${r.cls&&r.cls!='neu'?r.cls:''}"><div><div class="tx-t">${r.title}</div>${r.sub?`<div class="tx-s">${r.sub}</div>`:''}</div>
-      <div class="tx-r"><div class="tx-a ${r.cls=='neu'?'neu':r.amt>0?'pos':''}">${r.amtTxt||sTk(r.amt)}</div>${r.bal!=null?`<div class="tx-b tapbal">${balHtml(r.bal)}</div>`:''}</div></div>`;
+      <div class="tx-r"><div class="tx-a ${r.cls=='neu'?'neu':r.amt>0?'pos':''}">${r.amtTxt||sTk(r.amt)}</div>${r.bal!=null?`<div class="tx-b tapbal" data-k="${k}">${balHtml(r.bal,k)}</div>`:''}</div></div>`;
   });
   return html;
 }
@@ -555,7 +586,7 @@ const subJoin=(...p)=>p.filter(Boolean).join(' · ');
 function render(){
   let B=0,I=0;db.accounts.forEach(a=>{const s=accStats(a.id);B+=s.bal;I+=s.iR;});
   const ss=sunStats(),pl=pendingList(),pAmt=pl.reduce((s,t)=>s+incOf(t),0);
-  $('tBal').textContent=balTxt(B);$('tSun').textContent=balTxt(ss.bal);$('tInc').textContent=tk(I);$('tPaid').textContent=tk(ss.paid);
+  $('tBal').textContent=balTxt(B,'tBal');$('tSun').textContent=balTxt(ss.bal,'tSun');$('tInc').textContent=tk(I);$('tPaid').textContent=tk(ss.paid);
   const b=$('badge');b.textContent=pl.length>99?'99+':pl.length;b.classList.toggle('on',pl.length>0);
   const sb=$('sbadge');sb.textContent=b.textContent;sb.classList.toggle('on',pl.length>0);
   $('pendBar').innerHTML=pl.length?`<div class="pend-bar" onclick="openPending()"><span>⏳ <b>${pl.length}</b> incentive${pl.length>1?'s':''} pending · <b>${tk(pAmt)}</b></span><span class="blue">View ›</span></div>`:'';
@@ -569,11 +600,13 @@ function renderAccounts(){
   const list=db.accounts.filter(a=>(a.name+' '+(a.number||'')+' '+(a.bank||'')).toLowerCase().includes(q));
   if(!db.accounts.length){$('accList').innerHTML='<div class="empty">No accounts yet.</div>';return;}
   if(!list.length){$('accList').innerHTML='<div class="empty">No matching account.</div>';return;}
-  $('accList').innerHTML=list.map(a=>{const s=accStats(a.id);return `
-    <div class="acct" onclick="openAccount('${a.id}')">
-      <div class="acct-top"><div class="acct-nm">${esc(a.name)}<span>${esc(last4(a.number))}${a.bank?' · '+esc(a.bank):''}</span></div><div class="chev">›</div></div>
-      <div class="acct-bal tapbal ${s.bal<0&&!balHidden()?'red':''}">${balHtml(s.bal)}</div><div class="acct-lbl">Available balance</div>
-      ${s.nP?`<div class="pill">⏳ ${s.nP} pending · ${tk(s.iP)}</div>`:''}
+  $('accList').innerHTML=list.map(a=>{const s=accStats(a.id),k='acc:'+a.id;return `
+    <div class="bcard" style="background:${cardBg(a)}" onclick="openAccount('${a.id}')">
+      <div class="bc-top"><div><div class="bc-bank">${esc(a.bank||a.name)}</div>${a.bank?`<div class="bc-name">${esc(a.name)}</div>`:''}</div><div class="bc-type">DEBIT</div></div>
+      <div class="bc-mid"><div class="bc-chip"></div><div class="bc-wave">)))</div></div>
+      <div class="bc-num">${esc(cardNum(a.number))}</div>
+      <div class="bc-bot"><div class="tapbal" data-k="${k}"><div class="bc-lbl">Available balance</div><div class="bc-bal">${balHtml(s.bal,k)}</div></div>
+        ${s.nP?`<div class="bc-pend">⏳ ${s.nP} · ${tk(s.iP)}</div>`:''}</div>
     </div>`;}).join('');
 }
 
@@ -592,14 +625,14 @@ function evRow(e,withAcc){
 }
 function renderSunnah(){
   const ss=sunStats();
-  $('sBalS').textContent=balTxt(ss.bal);$('sGot').textContent=tk(ss.got);$('sPaid').textContent=tk(ss.paid);
+  $('sBalS').textContent=balTxt(ss.bal,'sun');$('sGot').textContent=tk(ss.got);$('sPaid').textContent=tk(ss.paid);
   const f=$('cFrom').value,to=$('cTo').value;let bal=0;const rows=[];
   allEvents().forEach(e=>{
     const d=SUN_DELTA[e.k];if(!d)return;bal+=evAmt(e)*d;
     if((f&&e.date<f)||(to&&e.date>to))return;
     const r=evRow(e,true);r.date=e.date;r.bal=bal;rows.push(r);
   });
-  $('cLedger').innerHTML=ledgerHTML(rows.reverse(),'No transactions');
+  $('cLedger').innerHTML=ledgerHTML(rows.reverse(),'No transactions','sunlg');
 }
 
 function renderHistory(){
@@ -621,9 +654,9 @@ function goHome(){closeMenu();curAcc=null;$('statement').style.display='none';$(
 function renderStatement(){
   const a=accOf(curAcc);if(!a)return goHome();
   const s=accStats(a.id);
-  $('sName').textContent=a.name;
+  $('sName').textContent=a.name;$('stHero').style.background=cardBg(a);
   $('sMeta').textContent=[a.bank,a.number?'A/C '+a.number:''].filter(Boolean).join(' · ')||'—';
-  $('sBal').textContent=balTxt(s.bal);$('sC').textContent=tk(s.c);$('sI').textContent=tk(s.iR);$('sW').textContent=tk(s.w);$('sR').textContent=tk(s.rcv);$('sT').textContent=tk(s.tr);$('sP').textContent=s.nP?`${tk(s.iP)} (${s.nP})`:tk(0);
+  $('sBal').dataset.k='acc:'+a.id;$('sBal').textContent=balTxt(s.bal,'acc:'+a.id);$('sC').textContent=tk(s.c);$('sI').textContent=tk(s.iR);$('sW').textContent=tk(s.w);$('sR').textContent=tk(s.rcv);$('sT').textContent=tk(s.tr);$('sP').textContent=s.nP?`${tk(s.iP)} (${s.nP})`:tk(0);
   const hasTx=db.txns.some(t=>t.accId===a.id||t.toAcc===a.id);
   $('delAccBtn').disabled=hasTx;$('delAccBtn').innerHTML=hasTx?'🗑 Delete Account<small>Not possible: account has transactions</small>':'🗑 Delete Account';
   // pending section
@@ -647,7 +680,7 @@ function renderStatement(){
     else if(e.k==='move'){const out=t.accId===a.id;bal+=out?-t.amount:t.amount;
       rows.push({date:e.date,amt:out?-t.amount:t.amount,bal,title:out?'Fund transfer to '+esc(accName(t.toAcc)):'Fund received from '+esc(accName(t.accId)),sub:esc(t.note)});}
   });
-  $('sLedger').innerHTML='<div class="lg-title">Transactions</div>'+ledgerHTML(rows.reverse(),'No transactions yet.');
+  $('sLedger').innerHTML='<div class="lg-title">Transactions</div>'+ledgerHTML(rows.reverse(),'No transactions yet.','st'+a.id);
 }
 
 /* ---------- pending incentives ---------- */
@@ -681,16 +714,19 @@ function openAccModal(acc){
   editingAcc=acc||null;$('accModalTitle').textContent=acc?'Edit Account':'Add Account';
   $('aName').value=acc?acc.name:'';$('aNum').value=acc?acc.number||'':'';$('aBank').value=acc?acc.bank||'':'';$('aOpen').value=acc&&acc.opening?acc.opening:'';
   const locked=acc&&db.txns.some(t=>t.accId===acc.id||t.toAcc===acc.id);
+  pickColor(acc?CARD_COLORS.indexOf(cardColor(acc)):db.accounts.length%CARD_COLORS.length);
   $('aOpen').disabled=!!locked;
   $('accModal').classList.add('show');setTimeout(()=>$('aName').focus(),100);
 }
 function saveAccount(){
   const name=$('aName').value.trim();if(!name)return toast('Enter account name');
-  const data={name,number:$('aNum').value.trim(),bank:$('aBank').value.trim()};
+  const data={name,number:$('aNum').value.trim(),bank:$('aBank').value.trim(),color:pickedColor};
   if(editingAcc){if(!$('aOpen').disabled)data.opening=+$('aOpen').value||0;data.upd=Date.now();Object.assign(editingAcc,data);toast('Account updated');}
   else{db.accounts.push(Object.assign(data,{id:uid(),opening:+$('aOpen').value||0,created:today(),ts:Date.now()}));toast('Account added');}
   save();closeModal('accModal');render();
 }
+let pickedColor=0;
+function pickColor(i){pickedColor=i;$('aColors').innerHTML=CARD_COLORS.map((c,j)=>`<button type="button" class="${j===i?'on':''}" style="background:linear-gradient(135deg,${c})" onclick="pickColor(${j})"></button>`).join('');}
 function editAccount(){openAccModal(accOf(curAcc));}
 function deleteAccount(){
   const a=accOf(curAcc);
@@ -776,13 +812,12 @@ function saveTxn(){
 }
 
 /* ---------- tap to show balance ---------- */
-function showBal(){balShown=true;clearTimeout(balTimer);balTimer=setTimeout(hideBal,10000);render();}
-function hideBal(){clearTimeout(balTimer);if(!balShown)return;balShown=false;render();}
-function toggleBal(){closeMenu();balShown?hideBal():showBal();}
+function showBal(k){clearTimeout(shownBal.get(k));shownBal.set(k,setTimeout(()=>{shownBal.delete(k);render();},10000));render();}
+function hideBal(){if(!shownBal.size)return;shownBal.forEach(t=>clearTimeout(t));shownBal.clear();render();}
 // while hidden, tapping a balance reveals it instead of opening the item underneath
-document.addEventListener('click',e=>{if(balHidden()&&e.target.closest('.tapbal')){e.stopPropagation();e.preventDefault();showBal();}},true);
+document.addEventListener('click',e=>{const el=e.target.closest('.tapbal[data-k]');if(el&&balHidden(el.dataset.k)){e.stopPropagation();e.preventDefault();showBal(el.dataset.k);}},true);
 document.addEventListener('visibilitychange',()=>{if(document.hidden){hideBal();awayAt=Date.now();}else if(awayAt&&Date.now()-awayAt>LOCK_AFTER)lockApp();});
-function saveHideBal(){db.hideBal=$('hideBalInput').checked;balShown=false;save();render();toast(db.hideBal?'Balances hidden until tapped':'Balances always shown');}
+function saveHideBal(){db.hideBal=$('hideBalInput').checked;shownBal.forEach(t=>clearTimeout(t));shownBal.clear();save();render();toast(db.hideBal?'Balances hidden until tapped':'Balances always shown');}
 
 /* ---------- menu, settings, backup ---------- */
 function toggleMenu(e){e.stopPropagation();$('accMenu').classList.remove('show');$('menu').classList.toggle('show');}
