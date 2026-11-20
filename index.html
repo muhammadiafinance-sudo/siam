@@ -225,7 +225,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
   background:radial-gradient(120% 90% at 50% 40%,#eef1ff 0%,rgba(238,241,255,0) 70%)}
 .cv-stage{position:relative;width:100%;max-width:680px;margin:0 auto;aspect-ratio:1.95;perspective:1100px;touch-action:pan-y}
 .vc{position:absolute;left:50%;top:5%;width:78%;aspect-ratio:1.586;border-radius:20px;color:#fff;overflow:hidden;cursor:pointer;
-  transition:transform .45s cubic-bezier(.2,.8,.2,1),filter .45s,opacity .45s;will-change:transform;
+  transition:transform .5s cubic-bezier(.22,.9,.24,1),opacity .4s;will-change:transform;
   box-shadow:0 18px 40px -12px rgba(20,30,90,.55),inset 0 0 0 1px rgba(255,255,255,.14);user-select:none;-webkit-user-select:none}
 .vc .wv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .vc .in{position:absolute;inset:0;padding:6.5% 7%;display:flex;flex-direction:column}
@@ -291,6 +291,12 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 .seg button{flex:1;white-space:nowrap;border:0;background:transparent;padding:10px 6px;border-radius:8px;font-weight:600;font-size:14px;color:var(--muted);cursor:pointer}
 .seg button.on{background:#fff;color:var(--purple);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .tx-a.neu{color:var(--blue)}
+.cv-stage.drag .vc{transition:none}
+/* balance reveal / hide */
+@keyframes balIn{from{opacity:0;filter:blur(8px);transform:translateY(6px) scale(.96)}to{opacity:1;filter:none;transform:none}}
+@keyframes balOut{to{opacity:0;filter:blur(8px);transform:translateY(-4px) scale(.96)}}
+.bal-in{display:inline-block;animation:balIn .55s cubic-bezier(.2,.8,.2,1) both}
+.bal-out{display:inline-block;animation:balOut .28s ease both}
 /* Pay Sunnah form slides open under its button */
 .slide{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .38s ease,opacity .3s ease,margin .38s ease;margin-bottom:0}
 .slide.open{grid-template-rows:1fr;opacity:1;margin-bottom:14px}
@@ -770,24 +776,43 @@ function renderAccounts(){
   carApply();carSwipe();
 }
 // position every card relative to the selected one (coverflow)
-function carApply(){
+function carApply(pos){
+  const p=pos==null?carIdx:pos;
   const cards=[...document.querySelectorAll('#cvStage .vc')],n=cards.length;
-  cards.forEach((c,i)=>{const off=i-carIdx,ab=Math.abs(off);
-    c.style.transform=`translateX(calc(-50% + ${off*58}%)) scale(${Math.max(.6,1-ab*.2)}) rotateY(${-Math.sign(off)*Math.min(ab,2)*14}deg)`;
-    c.style.zIndex=20-ab;c.style.filter=ab?`blur(${Math.min(ab,2)*1.6}px) saturate(.9)`:'none';
-    c.style.opacity=ab>2?0:1;c.style.pointerEvents=ab>2?'none':'';});
+  cards.forEach((c,i)=>{const off=i-p,ab=Math.abs(off),cl=Math.min(ab,2);
+    c.style.transform=`translateX(calc(-50% + ${off*58}%)) scale(${1-cl*.2}) rotateY(${-Math.sign(off)*cl*14}deg)`;
+    c.style.zIndex=100-Math.round(ab*10);c.style.filter='none';
+    c.style.opacity=ab>2.4?0:1;c.style.pointerEvents=ab>2.4?'none':'';});
   const l=$('carL'),r=$('carR');if(l){l.disabled=carIdx<=0;r.disabled=carIdx>=n-1;}
-  document.querySelectorAll('#carDots button').forEach((b,i)=>b.classList.toggle('on',i===carIdx));
+  document.querySelectorAll('#carDots button').forEach((b,i)=>b.classList.toggle('on',i===Math.round(p)));
 }
 function carTo(i){const n=document.querySelectorAll('#cvStage .vc').length;carIdx=Math.max(0,Math.min(n-1,i));carApply();}
 function carGo(d){carTo(carIdx+d);}
 function cardTap(i,id){if(i===carIdx)openAccount(id);else carTo(i);}
+// cards follow the finger; release velocity decides how far to glide (hard flick = several cards)
 function carSwipe(){
-  const st=$('cvStage');if(!st)return;let x0=null,moved=false;
-  st.addEventListener('pointerdown',e=>{x0=e.clientX;moved=false;});
-  st.addEventListener('pointermove',e=>{if(x0!=null&&Math.abs(e.clientX-x0)>8)moved=true;});
-  st.addEventListener('pointerup',e=>{if(x0==null)return;const dx=e.clientX-x0;x0=null;
-    if(Math.abs(dx)>40)carGo(dx<0?1:-1);});
+  const st=$('cvStage');if(!st)return;
+  let x0=null,pos0=0,pos=0,moved=false,samples=[];
+  const n=()=>st.children.length,step=()=>st.clientWidth*.78*.58||1;
+  st.addEventListener('pointerdown',e=>{if(e.button)return;x0=e.clientX;pos0=pos=carIdx;moved=false;samples=[{x:e.clientX,t:performance.now()}];});
+  st.addEventListener('pointermove',e=>{
+    if(x0==null)return;const dx=e.clientX-x0;
+    if(!moved&&Math.abs(dx)>6){moved=true;st.classList.add('drag');try{st.setPointerCapture(e.pointerId);}catch(_){}}
+    if(!moved)return;
+    let p=pos0-dx/step();const max=n()-1;
+    if(p<0)p=p*.35;else if(p>max)p=max+(p-max)*.35;   // rubber band at the ends
+    pos=p;carApply(p);
+    samples.push({x:e.clientX,t:performance.now()});if(samples.length>6)samples.shift();
+  });
+  const end=e=>{
+    if(x0==null)return;x0=null;st.classList.remove('drag');if(!moved)return;
+    const a=samples[0],b=samples[samples.length-1],dt=Math.max(1,b.t-a.t),v=(b.x-a.x)/dt; // px per ms
+    const glide=-v*220/step();                       // momentum in cards
+    let target=Math.round(pos+glide);
+    if(target===carIdx&&Math.abs(pos-carIdx)>.18)target=carIdx+(pos>carIdx?1:-1);
+    carTo(target);
+  };
+  st.addEventListener('pointerup',end);st.addEventListener('pointercancel',end);
   st.addEventListener('click',e=>{if(moved){e.stopPropagation();e.preventDefault();moved=false;}},true);
 }
 
@@ -1020,7 +1045,21 @@ function saveTxn(){
 }
 
 /* ---------- tap to show balance ---------- */
-function showBal(k){clearTimeout(shownBal.get(k));shownBal.set(k,setTimeout(()=>{shownBal.delete(k);render();},10000));render();}
+function balEls(k){return [...document.querySelectorAll(`.tapbal[data-k="${k}"]`)].map(el=>el.querySelector('b,.val')||el);}
+function countUp(el){
+  const txt=el.textContent,m=/([−-]?)([\d,]+(?:\.\d+)?)/.exec(txt);if(!m)return;
+  const target=parseFloat(m[2].replace(/,/g,''))*(m[1]?-1:1),t0=performance.now(),dur=650;
+  const step=t=>{const q=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-q,3);el.textContent=tk(Number.isInteger(target)?Math.round(target*e):target*e);if(q<1)requestAnimationFrame(step);else el.textContent=txt;};
+  requestAnimationFrame(step);
+}
+function showBal(k){
+  clearTimeout(shownBal.get(k));
+  shownBal.set(k,setTimeout(()=>{
+    balEls(k).forEach(el=>{el.classList.remove('bal-in');el.classList.add('bal-out');});
+    setTimeout(()=>{shownBal.delete(k);render();balEls(k).forEach(el=>el.classList.add('bal-in'));},280);
+  },10000));
+  render();balEls(k).forEach(el=>{el.classList.add('bal-in');countUp(el);});
+}
 function hideBal(){if(!shownBal.size)return;shownBal.forEach(t=>clearTimeout(t));shownBal.clear();render();}
 // while hidden, tapping a balance reveals it instead of opening the item underneath
 document.addEventListener('click',e=>{const el=e.target.closest('.tapbal[data-k]');if(el&&balHidden(el.dataset.k)){e.stopPropagation();e.preventDefault();showBal(el.dataset.k);}},true);
