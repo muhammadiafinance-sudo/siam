@@ -189,6 +189,21 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 .seg button{flex:1;border:0;background:transparent;padding:10px 6px;border-radius:8px;font-weight:600;font-size:14px;color:var(--muted);cursor:pointer}
 .seg button.on{background:#fff;color:var(--purple);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .tx-a.neu{color:var(--blue)}
+.lock-scr{position:fixed;inset:0;z-index:200;background:linear-gradient(160deg,var(--navy),var(--navy2));color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;padding:calc(20px + var(--safe-area-inset-top,env(safe-area-inset-top))) 20px 20px;user-select:none;-webkit-user-select:none}
+.lock-scr.show{display:flex}
+.lk-title{font-size:24px;font-weight:700;margin-bottom:28px}
+.lk-msg{font-size:15px;opacity:.9;min-height:20px}
+.lk-dots{display:flex;gap:18px;margin:18px 0 8px}
+.lk-dots i{width:16px;height:16px;border-radius:50%;border:2px solid #fff;display:block}
+.lk-dots i.on{background:#fff}
+.lk-dots.shake{animation:shk .35s}
+@keyframes shk{20%,60%{transform:translateX(-10px)}40%,80%{transform:translateX(10px)}}
+.lk-err{color:#ffb4b4;font-size:13px;min-height:18px;margin-bottom:18px;text-align:center}
+.lk-pad{display:grid;grid-template-columns:repeat(3,72px);gap:16px 26px}
+.lk-pad button{width:72px;height:72px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:28px;cursor:pointer}
+.lk-pad button:active{background:rgba(255,255,255,.3)}
+.lk-pad .lk-sm{font-size:14px;background:transparent;font-weight:600}
+@media print{.lock-scr{display:none!important}}
 #syncBox .f{margin-bottom:8px}
 .sync-st{font-size:14px;margin-bottom:10px;line-height:1.5}
 .sync-st .ok{color:var(--green);font-weight:600}.sync-st .err{color:var(--red);font-weight:600}
@@ -382,6 +397,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
   <div class="box"><div class="st">Balance Privacy</div>
     <label class="chk" style="background:#f6f7f9;border-color:var(--line);color:var(--text)"><input type="checkbox" id="hideBalInput" onchange="saveHideBal()"> Hide balances</label></div>
   <div class="box"><div class="st">☁️ Online Sync</div><div id="syncBox"></div></div>
+  <div class="box"><div class="st">🔒 App Lock PIN</div><div id="pinBox"></div></div>
   <div class="box"><div class="st">💾 Backup</div>
     <div class="row" style="margin:0"><button class="btn btn-p" style="flex:1" onclick="exportData()">⬇️ Download</button><button class="btn btn-o" style="flex:1" onclick="$('importFile').click()">⬆️ Restore</button></div></div>
   <div class="box"><div class="st red">Reset App</div>
@@ -395,6 +411,19 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
   <div class="mbtns"><button class="btn btn-p" onclick="closeModal('iosModal')">OK</button></div>
 </div></div>
 
+<div id="lock" class="lock-scr">
+  <div class="lk-title">Sunnah</div>
+  <div class="lk-msg" id="lkMsg">Enter PIN</div>
+  <div class="lk-dots" id="lkDots"><i></i><i></i><i></i><i></i></div>
+  <div class="lk-err" id="lkErr"></div>
+  <div class="lk-pad">
+    <button onclick="pinKey(1)">1</button><button onclick="pinKey(2)">2</button><button onclick="pinKey(3)">3</button>
+    <button onclick="pinKey(4)">4</button><button onclick="pinKey(5)">5</button><button onclick="pinKey(6)">6</button>
+    <button onclick="pinKey(7)">7</button><button onclick="pinKey(8)">8</button><button onclick="pinKey(9)">9</button>
+    <button class="lk-sm" id="lkLeft" onclick="pinLeft()"></button><button onclick="pinKey(0)">0</button><button class="lk-sm" onclick="pinKey(-1)">⌫</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="firebase-config.js"></script>
@@ -406,6 +435,7 @@ if(isNative)document.documentElement.classList.add('native');
 const $=id=>document.getElementById(id);
 let db={accounts:[],txns:[],rate:2.5,openCash:0,version:4};
 let curAcc=null,txnType='credit',editingAcc=null,rcvId=null;
+const LOCK_AFTER=30000;let awayAt=0,pinBuf='',pinMode='unlock',pinFirst='',pinFails=0,pinWaitUntil=0,pinDone=null;
 let fbAuth=null,fbFs=null,fbUser=null,fbUnsub=null,pushTimer=null,lastRemote=null,syncState='off',syncErr='',lastSync=null;
 
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
@@ -724,7 +754,7 @@ function hideBal(){clearTimeout(balTimer);if(!balShown)return;balShown=false;ren
 function toggleBal(){closeMenu();balShown?hideBal():showBal();}
 // while hidden, tapping a balance reveals it instead of opening the item underneath
 document.addEventListener('click',e=>{if(balHidden()&&e.target.closest('.tapbal')){e.stopPropagation();e.preventDefault();showBal();}},true);
-document.addEventListener('visibilitychange',()=>{if(document.hidden)hideBal();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){hideBal();awayAt=Date.now();}else if(awayAt&&Date.now()-awayAt>LOCK_AFTER)lockApp();});
 function saveHideBal(){db.hideBal=$('hideBalInput').checked;balShown=false;save();render();toast(db.hideBal?'Balances hidden until tapped':'Balances always shown');}
 
 /* ---------- menu, settings, backup ---------- */
@@ -770,7 +800,9 @@ function switchTab(t){
 }
 function openSide(){closeMenu();$('side').classList.add('open');$('sideBg').classList.add('show');}
 function closeSide(){$('side').classList.remove('open');$('sideBg').classList.remove('show');}
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSide();});
+document.addEventListener('keydown',e=>{
+  if($('lock').classList.contains('show')){if(/^[0-9]$/.test(e.key))pinKey(+e.key);else if(e.key==='Backspace')pinKey(-1);e.preventDefault();return;}
+  if(e.key==='Escape')closeSide();});
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{closeSide();if(curAcc)goHome();switchTab(b.dataset.tab);renderHistory();window.scrollTo(0,0);});
 $('accSearch').oninput=renderAccounts;
 ['hFrom','hTo','hType'].forEach(id=>$(id).onchange=renderHistory);
@@ -779,7 +811,7 @@ $('accSearch').oninput=renderAccounts;
 /* scale up on phones so the app looks like a normal-size mobile app */
 function fitMobile(){const w=window.innerWidth,z=w<768?Math.min(1.6,Math.max(1,w/410)):1;const r=document.documentElement;r.style.zoom=z;r.style.setProperty("--vh",(window.innerHeight/z/100)+"px");}
 fitMobile();window.addEventListener("resize",fitMobile);
-load();render();initSync();
+load();render();initSync();if(db.pin&&db.pin.hash)lockApp();
 
 /* ---------- online sync (Firebase) ---------- */
 // Whole data set lives in one Firestore document: users/{uid} {data: JSON}.
@@ -794,11 +826,12 @@ function mergeDb(a,b){
   const txs=new Map();
   [...(a.txns||[]),...(b.txns||[])].forEach(t=>{const o=txs.get(t.id);if(!o||(o.incStatus==='pending'&&t.incStatus==='received'))txs.set(t.id,t);});
   const set=(b.setUpd||0)>(a.setUpd||0)?b:a;
+  const pin=((b.pin&&b.pin.upd)||0)>((a.pin&&a.pin.upd)||0)?b.pin:a.pin;
   const byKey=(k)=>(x,y)=>((x[k]||0)-(y[k]||0))||(x.id<y.id?-1:x.id>y.id?1:0);
   return {
     accounts:[...accs.values()].filter(x=>!dead.has(x.id)&&(x.ts||0)>=resetAt).sort(byKey('ts')),
     txns:[...txs.values()].filter(t=>(t.created||0)>=resetAt).sort(byKey('created')),
-    rate:set.rate!=null?set.rate:2.5,setUpd:set.setUpd||0,deleted:[...dead].sort(),resetAt,version:4,openCash:0
+    rate:set.rate!=null?set.rate:2.5,setUpd:set.setUpd||0,deleted:[...dead].sort(),resetAt,version:4,openCash:0,pin:pin||null
   };
 }
 const syncJSON=x=>JSON.stringify(mergeDb(x,x));   // canonical form (excludes per-device hideBal)
@@ -836,7 +869,7 @@ function pushNow(){
     .catch(e=>{syncState='error';syncErr=e.message;renderSync();});
 }
 function renderSync(){
-  const box=$('syncBox');if(!box)return;
+  const box=$('syncBox');if(!box)return;renderPinBox();
   if(!fbAuth){box.innerHTML='<div class="sync-st muted">'+(syncState==='error'?'⚠ '+esc(syncErr):'Not set up')+'</div>';return;}
   if(!fbUser){box.innerHTML=`<div class="f"><input type="email" id="syEmail" placeholder="Email" autocomplete="email"></div>
     <div class="f"><input type="password" id="syPass" placeholder="Password" autocomplete="current-password"></div>
@@ -845,6 +878,7 @@ function renderSync(){
   const st=syncState==='ok'?`<span class="ok">✓ Synced</span>${lastSync?' · '+lastSync.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):''}`:
     syncState==='error'?`<span class="err">⚠ ${esc(syncErr)}</span>`:'Syncing…';
   box.innerHTML=`<div class="sync-st">${esc(fbUser.email)}<br>${st}</div><button class="btn btn-o btn-sm" onclick="syncLogout()">Sign out</button>`;
+  renderPinBox();
 }
 const authMsg=e=>({'auth/invalid-credential':'Wrong email or password','auth/wrong-password':'Wrong email or password','auth/user-not-found':'No account with this email',
   'auth/email-already-in-use':'This email already has an account','auth/weak-password':'Password must be at least 6 characters','auth/invalid-email':'Invalid email',
@@ -863,7 +897,77 @@ async function syncLogout(){
   if(fbUnsub){fbUnsub();fbUnsub=null;}clearTimeout(pushTimer);
   await FB.signOut(fbAuth);
   if(wipe){db={accounts:[],txns:[],rate:db.rate,openCash:0,version:4,hideBal:db.hideBal};saveLocal();goHome();}
+  renderPinBox();
   toast('Signed out');
+}
+
+/* ---------- app lock PIN (synced with the account) ---------- */
+// Stored as salted SHA-256 in db.pin {salt,hash,upd}; syncs like other data, so one PIN works on every device.
+function sha256(str){
+  const K=[0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+  const b=unescape(encodeURIComponent(str)),l=b.length,w=[];let H=[0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  const m=[];for(let i=0;i<l;i++)m[i>>2]|=b.charCodeAt(i)<<(24-(i%4)*8);m[l>>2]|=0x80<<(24-(l%4)*8);const n=(((l+8)>>6)+1)*16;m[n-1]=l*8;
+  const r=(x,y)=>(x>>>y)|(x<<(32-y));
+  for(let i=0;i<n;i+=16){let [a,b2,c,d,e,f,g,h]=H;
+    for(let j=0;j<64;j++){
+      if(j<16)w[j]=m[i+j]|0;else{const s0=r(w[j-15],7)^r(w[j-15],18)^(w[j-15]>>>3),s1=r(w[j-2],17)^r(w[j-2],19)^(w[j-2]>>>10);w[j]=(w[j-16]+s0+w[j-7]+s1)|0;}
+      const t1=(h+(r(e,6)^r(e,11)^r(e,25))+((e&f)^(~e&g))+K[j]+w[j])|0,t2=((r(a,2)^r(a,13)^r(a,22))+((a&b2)^(a&c)^(b2&c)))|0;
+      h=g;g=f;f=e;e=(d+t1)|0;d=c;c=b2;b2=a;a=(t1+t2)|0;}
+    H=[H[0]+a,H[1]+b2,H[2]+c,H[3]+d,H[4]+e,H[5]+f,H[6]+g,H[7]+h].map(x=>x|0);}
+  return H.map(x=>(x>>>0).toString(16).padStart(8,'0')).join('');
+}
+function pinHash(p,salt){return sha256(salt+':'+p);}
+function hasPin(){return !!(db.pin&&db.pin.hash);}
+function showLock(mode,msg,done){
+  pinMode=mode;pinBuf='';pinDone=done||null;$('lkMsg').textContent=msg;$('lkErr').textContent='';
+  $('lkLeft').textContent=mode==='unlock'?'Forgot':'Cancel';
+  dots();$('lock').classList.add('show');document.activeElement&&document.activeElement.blur&&document.activeElement.blur();
+}
+function lockApp(){if(!hasPin()||$('lock').classList.contains('show'))return;closeSide();closeMenu();showLock('unlock','Enter PIN');}
+function hideLock(){$('lock').classList.remove('show');pinBuf='';}
+function dots(){[...$('lkDots').children].forEach((d,i)=>d.classList.toggle('on',i<pinBuf.length));}
+function pinErr(m){$('lkErr').textContent=m;pinBuf='';dots();const d=$('lkDots');d.classList.remove('shake');void d.offsetWidth;d.classList.add('shake');}
+function pinKey(k){
+  if(pinMode==='unlock'&&Date.now()<pinWaitUntil)return pinErr(`Too many tries. Wait ${Math.ceil((pinWaitUntil-Date.now())/1000)}s`);
+  if(k<0){pinBuf=pinBuf.slice(0,-1);return dots();}
+  if(pinBuf.length>=4)return;pinBuf+=k;dots();
+  if(pinBuf.length===4)setTimeout(pinEntered,120);
+}
+function pinEntered(){
+  const p=pinBuf;
+  if(pinMode==='unlock'||pinMode==='verify'){
+    if(pinHash(p,db.pin.salt)===db.pin.hash){pinFails=0;const d=pinDone;hideLock();if(d)d();}
+    else{pinFails++;if(pinFails>=5){pinWaitUntil=Date.now()+30000;pinFails=0;}pinErr('Wrong PIN');}
+  }else if(pinMode==='set1'){pinFirst=p;showLock('set2','Confirm new PIN',pinDone);}
+  else if(pinMode==='set2'){
+    if(p!==pinFirst)return showLock('set1','PINs did not match. Enter new PIN',pinDone);
+    const salt=uid()+uid();db.pin={salt,hash:pinHash(p,salt),upd:Date.now()};save();hideLock();renderPinBox();toast('PIN set');
+  }
+}
+function pinLeft(){
+  if(pinMode==='unlock')return forgotPin();
+  hideLock();pinDone=null;
+}
+function renderPinBox(){
+  const box=$('pinBox');if(!box)return;
+  if(!fbUser&&!hasPin()){box.innerHTML='<div class="sync-st muted">Sign in to Online Sync first</div>';return;}
+  box.innerHTML=hasPin()
+    ?`<div class="row" style="margin:0"><button class="btn btn-o" style="flex:1" onclick="changePin()">Change PIN</button><button class="btn btn-o red" style="flex:1" onclick="removePin()">Remove PIN</button></div>`
+    :`<button class="btn btn-p" onclick="setPin()">Set PIN</button>`;
+}
+function setPin(){if(!fbUser)return toast('Sign in first');closeModal('setModal');showLock('set1','Enter new PIN');}
+function changePin(){closeModal('setModal');showLock('verify','Enter current PIN',()=>showLock('set1','Enter new PIN'));}
+function removePin(){closeModal('setModal');showLock('verify','Enter current PIN',()=>{db.pin={salt:'',hash:'',upd:Date.now()};save();renderPinBox();toast('PIN removed');});}
+// Forgot: prove it's you with the account password, then choose a new PIN.
+async function forgotPin(){
+  if(fbUser){
+    const pw=prompt('Forgot PIN\nEnter the password for '+fbUser.email);if(!pw)return;
+    try{await FB.signInWithEmailAndPassword(fbAuth,fbUser.email,pw);showLock('set1','Enter new PIN');}
+    catch(e){pinErr(authMsg(e));}
+  }else{
+    if(!confirm('Not signed in. To reset the PIN, the data on this device will be removed.\n(Your online data stays safe — sign in again to get it back.)'))return;
+    db={accounts:[],txns:[],rate:db.rate,openCash:0,version:4,hideBal:db.hideBal};saveLocal();hideLock();goHome();toast('Sign in to restore your data');
+  }
 }
 
 /* ---------- installable app (PWA) ---------- */
@@ -888,6 +992,7 @@ if(isNative){
   $('importFile').removeAttribute('accept'); // Android file picker doesn't understand ".json"
   const A=Capacitor.Plugins.App;
   if(A)A.addListener('backButton',()=>{
+    if($('lock').classList.contains('show'))return A.minimizeApp?A.minimizeApp():A.exitApp();
     const open=[...document.querySelectorAll('.modal-bg.show')];
     if(open.length)return open.forEach(m=>m.classList.remove('show'));
     if($('side').classList.contains('open'))return closeSide();
@@ -896,7 +1001,8 @@ if(isNative){
     if($('tab-accounts').style.display==='none'){switchTab('accounts');return window.scrollTo(0,0);}
     A.minimizeApp?A.minimizeApp():A.exitApp();
   });
-  A&&A.addListener('pause',()=>hideBal());
+  A&&A.addListener('pause',()=>{hideBal();awayAt=Date.now();});
+  A&&A.addListener('resume',()=>{if(awayAt&&Date.now()-awayAt>LOCK_AFTER)lockApp();});
 }
 </script>
 </body>
