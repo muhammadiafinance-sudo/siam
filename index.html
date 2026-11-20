@@ -288,7 +288,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 .menu button small{display:block;font-size:11px;color:var(--muted);font-weight:400}
 #tHint:empty{display:none}
 .seg{display:flex;gap:6px;background:#e3e7ee;padding:4px;border-radius:10px}
-.seg button{flex:1;border:0;background:transparent;padding:10px 6px;border-radius:8px;font-weight:600;font-size:14px;color:var(--muted);cursor:pointer}
+.seg button{flex:1;white-space:nowrap;border:0;background:transparent;padding:10px 6px;border-radius:8px;font-weight:600;font-size:14px;color:var(--muted);cursor:pointer}
 .seg button.on{background:#fff;color:var(--purple);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .tx-a.neu{color:var(--blue)}
 .upd-bar{background:#e7f1fb;border:1px solid #b9d7f3;border-radius:12px;padding:10px 12px 10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px}
@@ -487,10 +487,20 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
   <div class="f" id="tPendWrap"><label class="chk"><input type="checkbox" id="tPend" onchange="txnHint()"> Incentive not received yet (pending)</label></div>
   <div class="hint" id="tHint" style="margin:-4px 0 10px"></div>
   <div class="f" id="tMethodWrap"><label>Pay by</label>
-    <div class="seg"><button type="button" data-m="cash" onclick="setMethod('cash')">Cash</button><button type="button" data-m="transfer" onclick="setMethod('transfer')">Fund Transfer</button></div></div>
+    <div class="seg"><button type="button" data-m="cash" onclick="setMethod('cash')">Cash</button><button type="button" data-m="bank" onclick="setMethod('bank')">Bank</button><button type="button" data-m="mobile" onclick="setMethod('mobile')">Mobile Banking</button></div></div>
+  <div id="tBankWrap">
+    <div class="f"><label>Account Holder *</label><input id="pHolder" autocomplete="off"></div>
+    <div class="f"><label>Account Number *</label><input id="pBankAcc" inputmode="numeric" autocomplete="off"></div>
+    <div class="f"><label>Bank Name *</label><input id="pBankName" list="bankNames" autocomplete="off"></div>
+  </div>
+  <datalist id="bankNames"></datalist>
+  <div id="tMobWrap">
+    <div class="f"><label>Mobile Banking Operator *</label><select id="pOp"><option value="">Select operator</option><option>bKash</option><option>Nagad</option><option>Rocket</option><option>Upay</option></select></div>
+    <div class="f"><label>Account Number *</label><input id="pMobAcc" type="tel" inputmode="numeric" autocomplete="off"></div>
+  </div>
   <div class="f" id="tAccWrap"><label>From account</label><select id="tAcc" onchange="fillTo();txnHint()"></select></div>
   <div class="f" id="tToWrap"><label>To</label><select id="tTo" onchange="txnHint()"></select></div>
-  <div class="f"><label>Note</label><input id="tNote"></div>
+  <div class="f"><label id="tNoteLbl">Note</label><input id="tNote"></div>
   <div class="mbtns"><button class="btn btn-o" onclick="closeModal('txnModal')">Cancel</button><button class="btn btn-p" id="tSave" onclick="saveTxn()">Save</button></div>
 </div></div>
 
@@ -664,6 +674,14 @@ function ledgerHTML(rows,emptyMsg,pref){
   return html;
 }
 const subJoin=(...p)=>p.filter(Boolean).join(' · ');
+// payment details line for Sunnah payments
+function paySub(t){
+  const p=t.payTo||{};
+  if(t.method==='bank')return subJoin(esc(p.holder),p.acc?'A/C '+esc(p.acc):'',esc(p.bank),esc(t.note));
+  if(t.method==='mobile')return subJoin(esc(p.acc),esc(t.note));
+  if(t.method==='transfer')return subJoin('Fund Transfer',esc(t.note));
+  return esc(t.note);
+}
 const fmtN=n=>r2(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
 const fmtDs=s=>{const [y,m,d]=s.split('-');return `<div class="dt">${d} ${MON[+m-1]}</div><div class="yr">${y}</div>`;};
 // Formal bank-style statement. rows: oldest first {date,title,sub,amt}; amounts before `from` roll into the opening balance.
@@ -774,7 +792,7 @@ function evRow(e,withAcc){
     case 'withdraw':return {amt:-a,title:'Cash withdrawal',sub:subJoin(acc,esc(t.note))};
     case 'transfer':return {amt:-a,title:'Paid to Sunnah',sub:subJoin('Fund Transfer',acc,esc(t.note))};
     case 'move':return {amt:0,amtTxt:tk(a),cls:'neu',title:'Account to account transfer',sub:subJoin(''+esc(accName(t.accId))+' → '+esc(accName(t.toAcc)),esc(t.note))};
-    case 'pay':return {amt:-a,title:'Paid to Sunnah',sub:subJoin(t.method==='transfer'?'Fund Transfer':'Cash',esc(t.note))};
+    case 'pay':return {amt:-a,title:'Paid to Sunnah'+(t.method==='bank'||t.method==='transfer'?' by Bank':t.method==='mobile'?' by '+esc(t.payTo&&t.payTo.op||'Mobile Banking'):' in Cash'),sub:paySub(t)};
     case 'cashin':return {amt:a,title:'Added to Sunnah',sub:esc(t.note)};
   }
 }
@@ -897,16 +915,22 @@ let payMethod='cash';
 function setMethod(m){
   payMethod=m;
   document.querySelectorAll('#tMethodWrap [data-m]').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
+  $('tBankWrap').style.display=m==='bank'?'block':'none';
+  $('tMobWrap').style.display=m==='mobile'?'block':'none';
+  $('tNoteLbl').textContent=m==='bank'?'Narration':'Note';
 }
+const hidePayFields=()=>{$('tBankWrap').style.display='none';$('tMobWrap').style.display='none';$('tNoteLbl').textContent='Note';};
 function openTxn(type){
   txnType=type;
   $('tPendWrap').style.display=type==='credit'?'block':'none';
-  $('tMethodWrap').style.display='none';$('tAccWrap').style.display='none';$('tToWrap').style.display='none';
+  $('tMethodWrap').style.display='none';$('tAccWrap').style.display='none';$('tToWrap').style.display='none';hidePayFields();
   $('txnTitle').textContent=TXN_UI[type].title;$('tSave').className=TXN_UI[type].cls;
   resetTxnForm();
 }
 function openPay(method){
   txnType='pay';
+  ['pHolder','pBankAcc','pBankName','pOp','pMobAcc'].forEach(id=>$(id).value='');
+  $('bankNames').innerHTML=[...new Set(db.txns.filter(t=>t.payTo&&t.payTo.bank).map(t=>t.payTo.bank).concat(db.accounts.map(a=>a.bank).filter(Boolean)))].map(b=>`<option value="${esc(b)}">`).join('');
   $('tPendWrap').style.display='none';$('tMethodWrap').style.display='block';$('tAccWrap').style.display='none';$('tToWrap').style.display='none';
   $('txnTitle').textContent='Pay Sunnah';$('tSave').className='btn btn-pu';
   resetTxnForm();setMethod(method||'cash');
@@ -920,7 +944,7 @@ function fillTo(){
 }
 function openTransfer(accId){
   if(db.accounts.length<2)return toast('Add another account first');
-  txnType='move';
+  txnType='move';hidePayFields();
   $('tPendWrap').style.display='none';$('tMethodWrap').style.display='none';
   $('tAcc').innerHTML=accOpts(db.accounts);$('tAcc').value=accId;fillTo();
   $('tAccWrap').style.display='block';$('tToWrap').style.display='block';
@@ -954,6 +978,13 @@ function saveTxn(){
     if(amt>accStats(t.accId).bal&&!confirm('Amount is more than account balance. Save anyway?'))return;
   }else if(txnType==='pay'){
     t.method=payMethod;
+    if(payMethod==='bank'){
+      t.payTo={holder:$('pHolder').value.trim(),acc:$('pBankAcc').value.trim(),bank:$('pBankName').value.trim()};
+      if(!t.payTo.holder)return toast('Enter account holder');if(!t.payTo.acc)return toast('Enter account number');if(!t.payTo.bank)return toast('Enter bank name');
+    }else if(payMethod==='mobile'){
+      t.payTo={op:$('pOp').value,acc:$('pMobAcc').value.trim()};
+      if(!t.payTo.op)return toast('Select mobile banking operator');if(!t.payTo.acc)return toast('Enter account number');
+    }
     if(amt>sunStats().bal&&!confirm('Amount is more than Sunnah balance. Save anyway?'))return;
   }
   if(!confirm('Save this entry? It cannot be deleted later.'))return;
