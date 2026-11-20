@@ -885,8 +885,12 @@ const authMsg=e=>({'auth/invalid-credential':'Wrong email or password','auth/wro
   'auth/network-request-failed':'No internet connection'}[e.code]||e.message);
 async function syncLogin(create){
   const em=$('syEmail').value.trim(),pw=$('syPass').value;if(!em||!pw)return toast('Enter email and password');
-  try{await (create?FB.createUserWithEmailAndPassword:FB.signInWithEmailAndPassword)(fbAuth,em,pw);toast(create?'Account created · syncing':'Signed in · syncing');}
-  catch(e){toast(authMsg(e));}
+  const btns=[...document.querySelectorAll('#syncBox button')];btns.forEach(b=>b.disabled=true);toast(create?'Creating account…':'Signing in…');
+  try{
+    await Promise.race([(create?FB.createUserWithEmailAndPassword:FB.signInWithEmailAndPassword)(fbAuth,em,pw),
+      new Promise((_,rej)=>setTimeout(()=>rej({code:'timeout',message:'No response from server. Check internet and try again.'}),25000))]);
+    toast(create?'Account created · syncing':'Signed in · syncing');
+  }catch(e){toast(authMsg(e));btns.forEach(b=>b.disabled=false);}
 }
 async function syncReset(){
   const em=$('syEmail').value.trim();if(!em)return toast('Enter your email first');
