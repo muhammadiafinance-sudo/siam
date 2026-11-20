@@ -176,8 +176,16 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 .tapbal{cursor:pointer;user-select:none;-webkit-user-select:none}
 .masked{letter-spacing:1px;opacity:.9}
 .native .printBtn{display:none!important}
+.stbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.stbar .back{margin-bottom:0}
+.accmenu-wrap{position:relative}
+.icon-btn.dots{color:var(--text);font-size:22px}
+.icon-btn.dots:hover{background:#e3e7ee}
+#accMenu{top:44px;z-index:25}
+.menu button:disabled{color:var(--muted);cursor:not-allowed;background:none}
+.menu button small{display:block;font-size:11px;color:var(--muted);font-weight:400}
 .ios-steps{font-size:14px;line-height:1.7}
-@media print{header .hr,.tabs,.row,.back,.modal-bg,.pend-bar,.side,.bnav{display:none!important}body{background:#fff}.split{display:block!important}}
+@media print{.stbar,header .hr,.tabs,.row,.back,.modal-bg,.pend-bar,.side,.bnav{display:none!important}body{background:#fff}.split{display:block!important}}
 </style>
 </head>
 <body>
@@ -193,8 +201,6 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
     <div class="menu" id="menu">
       <button onclick="openSettings()">⚙️ Settings</button>
       <hr>
-      <button onclick="exportData()">⬇️ Download Backup</button>
-      <button onclick="document.getElementById('importFile').click()">⬆️ Restore Backup</button>
       <hr>
       <button class="printBtn" onclick="window.print()">🖨️ Print</button>
       <button class="installBtn" onclick="installApp()" style="display:none">📲 Install App</button>
@@ -214,8 +220,6 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
   <hr>
   <button class="sbtn" onclick="closeSide();openPending()">⏳ Pending Incentive <span class="sbadge" id="sbadge"></span></button>
   <button class="sbtn" onclick="closeSide();openSettings()">⚙️ Settings</button>
-  <button class="sbtn" onclick="closeSide();exportData()">⬇️ Download Backup</button>
-  <button class="sbtn" onclick="closeSide();document.getElementById('importFile').click()">⬆️ Restore Backup</button>
   <button class="sbtn printBtn" onclick="closeSide();window.print()">🖨️ Print</button>
   <button class="sbtn installBtn" onclick="closeSide();installApp()" style="display:none">📲 Install App</button>
   <div class="foot">🔒 Entries are locked and cannot be deleted, like a bank statement.</div>
@@ -283,7 +287,18 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 
   <!-- Account statement -->
   <div id="statement" style="display:none">
-    <button class="back" onclick="goHome()">‹ Accounts</button>
+    <div class="stbar">
+      <button class="back" onclick="goHome()">‹ Accounts</button>
+      <div class="accmenu-wrap">
+        <button class="icon-btn dots" title="Account options" onclick="toggleAccMenu(event)">⋮</button>
+        <div class="menu" id="accMenu">
+          <button onclick="closeMenu();editAccount()">✎ Edit Account</button>
+          <button class="printBtn" onclick="closeMenu();window.print()">🖨️ Print Statement</button>
+          <hr>
+          <button id="delAccBtn" class="red" onclick="closeMenu();deleteAccount()">🗑 Delete Account</button>
+        </div>
+      </div>
+    </div>
     <div class="split"><div>
     <div class="hero">
       <div class="n" id="sName"></div>
@@ -299,11 +314,6 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
     <div class="row">
       <button class="btn btn-g" style="flex:1" onclick="openTxn('credit')">+ Remittance In</button>
       <button class="btn btn-r" style="flex:1" onclick="openTxn('withdraw')">− Withdraw to Cash</button>
-    </div>
-    <div class="row">
-      <button class="btn btn-o btn-sm" onclick="editAccount()">✎ Edit Account</button>
-      <button class="btn btn-o btn-sm printBtn" onclick="window.print()">🖨 Print Statement</button>
-      <button class="btn btn-o btn-sm red" id="delAccBtn" onclick="deleteAccount()">🗑 Delete Account</button>
     </div>
     <div id="sPending"></div>
     </div><div>
@@ -363,6 +373,8 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
     <label class="chk" style="background:#f6f7f9;border-color:var(--line);color:var(--text)"><input type="checkbox" id="hideBalInput" onchange="saveHideBal()"> Hide balances (tap to show)</label></div>
   <div class="box"><div class="st">Opening Cash</div><p>Cash you already had in hand before using this app.</p>
     <div class="row" style="margin:0"><input type="number" id="openCashInput" style="flex:1"><button class="btn btn-p" onclick="saveOpenCash()">Save</button></div></div>
+  <div class="box"><div class="st">💾 Backup</div><p>Save all your data to a file, or restore it from a backup file.</p>
+    <div class="row" style="margin:0"><button class="btn btn-p" style="flex:1" onclick="exportData()">⬇️ Download</button><button class="btn btn-o" style="flex:1" onclick="$('importFile').click()">⬆️ Restore</button></div></div>
   <div class="box"><div class="st red">Reset App</div><p>Erase everything and start fresh. Download a backup first.</p>
     <button class="btn btn-r btn-sm" onclick="clearAll()">Erase All Data</button></div>
 </div></div>
@@ -371,7 +383,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 <div class="modal-bg" id="iosModal"><div class="modal">
   <h3><span>📲 Install on iPhone / iPad</span><button class="x" onclick="closeModal('iosModal')">×</button></h3>
   <div class="ios-steps">1. Open this page in <b>Safari</b>.<br>2. Tap the <b>Share</b> button (square with ↑ arrow).<br>3. Choose <b>Add to Home Screen</b>, then tap <b>Add</b>.</div>
-  <div class="hint" style="margin-top:10px">Your data stays on this device. Use ⬇️ Download Backup regularly.</div>
+  <div class="hint" style="margin-top:10px">Your data stays on this device. Download a backup regularly (⚙️ Settings → Backup).</div>
   <div class="mbtns"><button class="btn btn-p" onclick="closeModal('iosModal')">OK</button></div>
 </div></div>
 
@@ -533,7 +545,7 @@ function renderHistory(){
 
 /* ---------- account statement ---------- */
 function openAccount(id){curAcc=id;$('home').style.display='none';$('statement').style.display='block';renderStatement();window.scrollTo(0,0);}
-function goHome(){curAcc=null;$('statement').style.display='none';$('home').style.display='block';render();}
+function goHome(){closeMenu();curAcc=null;$('statement').style.display='none';$('home').style.display='block';render();}
 function renderStatement(){
   const a=accOf(curAcc);if(!a)return goHome();
   const s=accStats(a.id);
@@ -541,7 +553,7 @@ function renderStatement(){
   $('sMeta').textContent=[a.bank,a.number?'A/C '+a.number:''].filter(Boolean).join(' · ')||'—';
   $('sBal').textContent=balTxt(s.bal);$('sC').textContent=tk(s.c);$('sI').textContent=tk(s.iR);$('sW').textContent=tk(s.w);$('sP').textContent=s.nP?`${tk(s.iP)} (${s.nP})`:tk(0);
   const hasTx=db.txns.some(t=>t.accId===a.id);
-  $('delAccBtn').style.display=hasTx?'none':'';
+  $('delAccBtn').disabled=hasTx;$('delAccBtn').innerHTML=hasTx?'🗑 Delete Account<small>Not possible: account has transactions</small>':'🗑 Delete Account';
   // pending section
   const pl=pendingList().filter(t=>t.accId===a.id);
   $('sPending').innerHTML=pl.length?`<div class="ledger"><div class="lg-h" style="background:var(--amber);color:var(--gold)">⏳ Pending incentive (${pl.length}) — not in balance yet</div>`+
@@ -672,8 +684,9 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)hideBal();}
 function saveHideBal(){db.hideBal=$('hideBalInput').checked;balShown=false;save();render();toast(db.hideBal?'Balances hidden until tapped':'Balances always shown');}
 
 /* ---------- menu, settings, backup ---------- */
-function toggleMenu(e){e.stopPropagation();$('menu').classList.toggle('show');}
-function closeMenu(){$('menu').classList.remove('show');}
+function toggleMenu(e){e.stopPropagation();$('accMenu').classList.remove('show');$('menu').classList.toggle('show');}
+function toggleAccMenu(e){e.stopPropagation();$('menu').classList.remove('show');$('accMenu').classList.toggle('show');}
+function closeMenu(){$('menu').classList.remove('show');$('accMenu').classList.remove('show');}
 document.addEventListener('click',e=>{if(!e.target.closest('.menu'))closeMenu();});
 function openSettings(){closeMenu();$('rateInput').value=db.rate;$('openCashInput').value=db.openCash||'';$('hideBalInput').checked=db.hideBal!==false;$('setModal').classList.add('show');}
 function saveRate(){const r=parseFloat($('rateInput').value);if(isNaN(r)||r<0)return toast('Invalid rate');db.rate=r;save();render();toast('Rate saved');}
@@ -695,7 +708,7 @@ function importData(e){
   closeMenu();const f=e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.accounts||!d.txns)throw 0;
     if(!confirm('Replace current data with this backup?'))return;
-    db=Object.assign({rate:2.5,openCash:0},d);migrate();save();curAcc=null;goHome();toast('Backup restored');}catch(err){toast('Invalid backup file');}};
+    db=Object.assign({rate:2.5,openCash:0},d);migrate();save();curAcc=null;closeModal('setModal');goHome();toast('Backup restored');}catch(err){toast('Invalid backup file');}};
   r.readAsText(f);e.target.value='';
 }
 function clearAll(){
@@ -750,7 +763,7 @@ if(isNative){
     const open=[...document.querySelectorAll('.modal-bg.show')];
     if(open.length)return open.forEach(m=>m.classList.remove('show'));
     if($('side').classList.contains('open'))return closeSide();
-    if($('menu').classList.contains('show'))return closeMenu();
+    if(document.querySelector('.menu.show'))return closeMenu();
     if(curAcc)return goHome();
     if(partyFilter){partyFilter=null;return renderHistory();}
     if($('tab-accounts').style.display==='none'){switchTab('accounts');return window.scrollTo(0,0);}
