@@ -255,18 +255,18 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 <body>
 <header>
   <div class="hl">
-    <button class="icon-btn burger" title="Menu" onclick="openSide()">☰</button>
+    <button class="icon-btn burger" title="Menu" onclick="openSide()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
     <div><h1>Sunnah</h1></div>
   </div>
   <div class="hr">
-    <button class="icon-btn" title="Pending incentives" onclick="openPending()">🔔<span class="badge" id="badge"></span></button>
+    <button class="icon-btn" title="Pending incentives" onclick="openPending()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="badge" id="badge"></span></button>
     <button class="icon-btn" title="Menu" onclick="toggleMenu(event)">⋮</button>
     <div class="menu" id="menu">
-      <button onclick="openSettings()">⚙️ Settings</button>
+      <button onclick="openSettings()">Settings</button>
       <hr>
       <hr>
-      <button class="printBtn" onclick="window.print()">🖨️ Print</button>
-      <button class="installBtn" onclick="installApp()" style="display:none">📲 Install App</button>
+      <button class="printBtn" onclick="window.print()">Print</button>
+      <button class="installBtn" onclick="installApp()" style="display:none">Install App</button>
     </div>
   </div>
 </header>
@@ -276,14 +276,14 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 <div class="side-bg" id="sideBg" onclick="closeSide()"></div>
 <nav class="side" id="side">
   <div class="side-head"><b>Menu</b><button onclick="closeSide()" title="Close">×</button></div>
-  <button data-tab="accounts" class="active">🏦 Accounts</button>
-  <button data-tab="sunnah">👤 Sunnah</button>
-  <button data-tab="history">📜 History</button>
+  <button data-tab="accounts" class="active">Accounts</button>
+  <button data-tab="sunnah">Sunnah</button>
+  <button data-tab="history">History</button>
   <hr>
-  <button class="sbtn" onclick="closeSide();openPending()">⏳ Pending Incentive <span class="sbadge" id="sbadge"></span></button>
-  <button class="sbtn" onclick="closeSide();openSettings()">⚙️ Settings</button>
-  <button class="sbtn printBtn" onclick="closeSide();window.print()">🖨️ Print</button>
-  <button class="sbtn installBtn" onclick="closeSide();installApp()" style="display:none">📲 Install App</button>
+  <button class="sbtn" onclick="closeSide();openPending()">Pending Incentive <span class="sbadge" id="sbadge"></span></button>
+  <button class="sbtn" onclick="closeSide();openSettings()">Settings</button>
+  <button class="sbtn printBtn" onclick="closeSide();window.print()">Print</button>
+  <button class="sbtn installBtn" onclick="closeSide();installApp()" style="display:none">Install App</button>
 </nav>
 <div class="wrap">
   <div id="home">
@@ -296,7 +296,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
       <div class="card"><div class="lbl">Paid to Sunnah</div><div class="val red" id="tPaid">0</div></div>
     </div>
 
-    <h2 class="page-title" id="pageTitle">🏦 Accounts</h2>
+    <h2 class="page-title" id="pageTitle">Accounts</h2>
 
     <div id="tab-accounts">
       <div class="row">
@@ -309,7 +309,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
     <div id="tab-sunnah" style="display:none"><div class="split"><div>
       <div class="hero cash">
         <div class="n">Sunnah</div>
-        <div class="big tapbal" data-k="sun" id="sBalS">0</div><div class="lb">Sunnah Balance</div>
+        <div class="big" id="sBalS">0</div><div class="lb">Sunnah Balance</div>
         <div class="sub2"><div>Received<b id="sGot">0</b></div><div>Paid<b id="sPaid">0</b></div></div>
       </div>
       <div class="row">
@@ -350,10 +350,10 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
       <div class="accmenu-wrap">
         <button class="icon-btn dots" title="Account options" onclick="toggleAccMenu(event)">⋮</button>
         <div class="menu" id="accMenu">
-          <button onclick="closeMenu();editAccount()">✎ Edit Account</button>
-          <button class="printBtn" onclick="closeMenu();window.print()">🖨️ Print Statement</button>
+          <button onclick="closeMenu();editAccount()">Edit Account</button>
+          <button class="printBtn" onclick="closeMenu();window.print()">Print Statement</button>
           <hr>
-          <button id="delAccBtn" class="red" onclick="closeMenu();deleteAccount()">🗑 Delete Account</button>
+          <button id="delAccBtn" class="red" onclick="closeMenu();deleteAccount()">Delete Account</button>
         </div>
       </div>
     </div>
@@ -361,7 +361,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
     <div class="hero" id="stHero">
       <div class="n" id="sName"></div>
       <div class="t" id="sMeta"></div>
-      <div class="big tapbal" id="sBal">0</div><div class="lb">Available balance</div>
+      <div class="big" id="sBal">0</div><div class="lb">Available balance</div>
       <div class="sub2">
         <div>Remittance<b id="sC">0</b></div>
         <div>Fund received<b id="sR">0</b></div>
@@ -404,7 +404,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
   <div class="f" id="tPendWrap"><label class="chk"><input type="checkbox" id="tPend" onchange="txnHint()"> Incentive not received yet (pending)</label></div>
   <div class="hint" id="tHint" style="margin:-4px 0 10px"></div>
   <div class="f" id="tMethodWrap"><label>Pay by</label>
-    <div class="seg"><button type="button" data-m="cash" onclick="setMethod('cash')">💵 Cash</button><button type="button" data-m="transfer" onclick="setMethod('transfer')">🏦 Fund Transfer</button></div></div>
+    <div class="seg"><button type="button" data-m="cash" onclick="setMethod('cash')">Cash</button><button type="button" data-m="transfer" onclick="setMethod('transfer')">Fund Transfer</button></div></div>
   <div class="f" id="tAccWrap"><label>From account</label><select id="tAcc" onchange="fillTo();txnHint()"></select></div>
   <div class="f" id="tToWrap"><label>To</label><select id="tTo" onchange="txnHint()"></select></div>
   <div class="f"><label>Note</label><input id="tNote"></div>
@@ -413,7 +413,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 
 <!-- Pending list modal -->
 <div class="modal-bg" id="pendModal"><div class="modal">
-  <h3><span>⏳ Pending Incentives</span><button class="x" onclick="closeModal('pendModal')">×</button></h3>
+  <h3><span>Pending Incentives</span><button class="x" onclick="closeModal('pendModal')">×</button></h3>
   <div id="pendSum" class="hint" style="margin-bottom:10px"></div>
   <div id="pendList"></div>
 </div></div>
@@ -423,28 +423,28 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
   <h3><span>Incentive Received</span><button class="x" onclick="closeModal('rcvModal')">×</button></h3>
   <div id="rcvInfo" class="box"></div>
   <div class="f"><label>Received Date *</label><input type="date" id="rDate"></div>
-  <div class="mbtns"><button class="btn btn-o" onclick="closeModal('rcvModal')">Cancel</button><button class="btn btn-g" onclick="confirmReceive()">✓ Add to Balance</button></div>
+  <div class="mbtns"><button class="btn btn-o" onclick="closeModal('rcvModal')">Cancel</button><button class="btn btn-g" onclick="confirmReceive()">Add to Balance</button></div>
 </div></div>
 
 <!-- Settings modal -->
 <div class="modal-bg" id="setModal"><div class="modal">
-  <h3><span>⚙️ Settings</span><button class="x" onclick="closeModal('setModal')">×</button></h3>
+  <h3><span>Settings</span><button class="x" onclick="closeModal('setModal')">×</button></h3>
   <div class="box"><div class="st">Incentive Rate (%)</div>
     <div class="row" style="margin:0"><input type="number" step="0.01" id="rateInput" style="flex:1"><button class="btn btn-p" onclick="saveRate()">Save</button></div></div>
   <div class="box"><div class="st">Balance Privacy</div>
     <label class="chk" style="background:#f6f7f9;border-color:var(--line);color:var(--text)"><input type="checkbox" id="hideBalInput" onchange="saveHideBal()"> Hide balances</label></div>
-  <div class="box"><div class="st">☁️ Online Sync</div><div id="syncBox"></div></div>
-  <div class="box"><div class="st">🔒 App Lock PIN</div><div id="pinBox"></div></div>
-  <div class="box"><div class="st">💾 Backup</div>
-    <div class="row" style="margin:0"><button class="btn btn-p" style="flex:1" onclick="exportData()">⬇️ Download</button><button class="btn btn-o" style="flex:1" onclick="$('importFile').click()">⬆️ Restore</button></div></div>
-  <div class="box"><div class="st">ℹ️ App Version</div><div id="verBox"></div></div>
+  <div class="box"><div class="st">Online Sync</div><div id="syncBox"></div></div>
+  <div class="box"><div class="st">App Lock PIN</div><div id="pinBox"></div></div>
+  <div class="box"><div class="st">Backup</div>
+    <div class="row" style="margin:0"><button class="btn btn-p" style="flex:1" onclick="exportData()">Download</button><button class="btn btn-o" style="flex:1" onclick="$('importFile').click()">Restore</button></div></div>
+  <div class="box"><div class="st">App Version</div><div id="verBox"></div></div>
   <div class="box"><div class="st red">Reset App</div>
     <button class="btn btn-r btn-sm" onclick="clearAll()">Erase All Data</button></div>
 </div></div>
 
 <!-- iOS install help -->
 <div class="modal-bg" id="iosModal"><div class="modal">
-  <h3><span>📲 Install on iPhone / iPad</span><button class="x" onclick="closeModal('iosModal')">×</button></h3>
+  <h3><span>Install on iPhone / iPad</span><button class="x" onclick="closeModal('iosModal')">×</button></h3>
   <div class="ios-steps">1. Open this page in <b>Safari</b>.<br>2. Tap the <b>Share</b> button (square with ↑ arrow).<br>3. Choose <b>Add to Home Screen</b>, then tap <b>Add</b>.</div>
   <div class="mbtns"><button class="btn btn-p" onclick="closeModal('iosModal')">OK</button></div>
 </div></div>
@@ -469,7 +469,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
     <button onclick="pinKey(1)">1</button><button onclick="pinKey(2)">2</button><button onclick="pinKey(3)">3</button>
     <button onclick="pinKey(4)">4</button><button onclick="pinKey(5)">5</button><button onclick="pinKey(6)">6</button>
     <button onclick="pinKey(7)">7</button><button onclick="pinKey(8)">8</button><button onclick="pinKey(9)">9</button>
-    <button class="lk-sm" id="lkLeft" onclick="pinLeft()"></button><button onclick="pinKey(0)">0</button><button class="lk-sm" onclick="pinKey(-1)">⌫</button>
+    <button class="lk-sm" id="lkLeft" onclick="pinLeft()"></button><button onclick="pinKey(0)">0</button><button class="lk-sm" onclick="pinKey(-1)"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><path d="M18 9l-6 6M12 9l6 6"/></svg></button>
   </div>
 </div>
 
@@ -576,7 +576,7 @@ function ledgerHTML(rows,emptyMsg,pref){
   rows.forEach((r,i)=>{const k=(pref||'lg')+':'+(rows.length-i);
     if(r.date!==last){html+=`<div class="lg-h">${fmtD(r.date)}</div>`;last=r.date;}
     html+=`<div class="tx ${r.cls&&r.cls!='neu'?r.cls:''}"><div><div class="tx-t">${r.title}</div>${r.sub?`<div class="tx-s">${r.sub}</div>`:''}</div>
-      <div class="tx-r"><div class="tx-a ${r.cls=='neu'?'neu':r.amt>0?'pos':''}">${r.amtTxt||sTk(r.amt)}</div>${r.bal!=null?`<div class="tx-b tapbal" data-k="${k}">${balHtml(r.bal,k)}</div>`:''}</div></div>`;
+      <div class="tx-r"><div class="tx-a ${r.cls=='neu'?'neu':r.amt>0?'pos':''}">${r.amtTxt||sTk(r.amt)}</div>${r.bal!=null?`<div class="tx-b">${tk(r.bal)}</div>`:''}</div></div>`;
   });
   return html;
 }
@@ -589,7 +589,7 @@ function render(){
   $('tBal').textContent=balTxt(B,'tBal');$('tSun').textContent=balTxt(ss.bal,'tSun');$('tInc').textContent=tk(I);$('tPaid').textContent=tk(ss.paid);
   const b=$('badge');b.textContent=pl.length>99?'99+':pl.length;b.classList.toggle('on',pl.length>0);
   const sb=$('sbadge');sb.textContent=b.textContent;sb.classList.toggle('on',pl.length>0);
-  $('pendBar').innerHTML=pl.length?`<div class="pend-bar" onclick="openPending()"><span>⏳ <b>${pl.length}</b> incentive${pl.length>1?'s':''} pending · <b>${tk(pAmt)}</b></span><span class="blue">View ›</span></div>`:'';
+  $('pendBar').innerHTML=pl.length?`<div class="pend-bar" onclick="openPending()"><span><b>${pl.length}</b> incentive${pl.length>1?'s':''} pending · <b>${tk(pAmt)}</b></span><span class="blue">View ›</span></div>`:'';
   renderAccounts();renderSunnah();renderHistory();
   if(curAcc)renderStatement();
   if($('pendModal').classList.contains('show'))renderPending();
@@ -606,26 +606,26 @@ function renderAccounts(){
       <div class="bc-mid"><div class="bc-chip"></div><div class="bc-wave">)))</div></div>
       <div class="bc-num">${esc(cardNum(a.number))}</div>
       <div class="bc-bot"><div class="tapbal" data-k="${k}"><div class="bc-lbl">Available balance</div><div class="bc-bal">${balHtml(s.bal,k)}</div></div>
-        ${s.nP?`<div class="bc-pend">⏳ ${s.nP} · ${tk(s.iP)}</div>`:''}</div>
+        ${s.nP?`<div class="bc-pend">Pending ${tk(s.iP)}</div>`:''}</div>
     </div>`;}).join('');
 }
 
 function evRow(e,withAcc){
-  const t=e.t,a=evAmt(e),acc=withAcc?'🏦 '+esc(accName(t.accId)):'';
+  const t=e.t,a=evAmt(e),acc=withAcc?''+esc(accName(t.accId)):'';
   switch(e.k){
-    case 'credit':return {amt:a,title:'Remittance received',sub:subJoin(acc,t.incStatus==='pending'?'<span class="tag tag-p">INCENTIVE PENDING</span>':'',esc(t.note))};
+    case 'credit':return {amt:a,title:'Remittance received',sub:subJoin(acc,t.incStatus==='pending'?'<span class="gold">Incentive pending</span>':'',esc(t.note))};
     case 'receive':return {amt:a,title:'Fund received',sub:subJoin(acc,esc(t.note))};
     case 'inc':return {amt:a,title:'Incentive received '+(t.rate!=null?t.rate:db.rate)+'%',sub:subJoin(acc,'For '+tk(t.amount)+' on '+fmtD(t.date))};
     case 'withdraw':return {amt:-a,title:'Cash withdrawal',sub:subJoin(acc,esc(t.note))};
-    case 'transfer':return {amt:-a,title:'Paid to Sunnah',sub:subJoin('🏦 Fund Transfer',acc,esc(t.note))};
-    case 'move':return {amt:0,amtTxt:'⇄ '+tk(a),cls:'neu',title:'Account to account transfer',sub:subJoin('🏦 '+esc(accName(t.accId))+' → '+esc(accName(t.toAcc)),esc(t.note))};
-    case 'pay':return {amt:-a,title:'Paid to Sunnah',sub:subJoin(t.method==='transfer'?'🏦 Fund Transfer':'💵 Cash',esc(t.note))};
+    case 'transfer':return {amt:-a,title:'Paid to Sunnah',sub:subJoin('Fund Transfer',acc,esc(t.note))};
+    case 'move':return {amt:0,amtTxt:tk(a),cls:'neu',title:'Account to account transfer',sub:subJoin(''+esc(accName(t.accId))+' → '+esc(accName(t.toAcc)),esc(t.note))};
+    case 'pay':return {amt:-a,title:'Paid to Sunnah',sub:subJoin(t.method==='transfer'?'Fund Transfer':'Cash',esc(t.note))};
     case 'cashin':return {amt:a,title:'Added to Sunnah',sub:esc(t.note)};
   }
 }
 function renderSunnah(){
   const ss=sunStats();
-  $('sBalS').textContent=balTxt(ss.bal,'sun');$('sGot').textContent=tk(ss.got);$('sPaid').textContent=tk(ss.paid);
+  $('sBalS').textContent=tk(ss.bal);$('sGot').textContent=tk(ss.got);$('sPaid').textContent=tk(ss.paid);
   const f=$('cFrom').value,to=$('cTo').value;let bal=0;const rows=[];
   allEvents().forEach(e=>{
     const d=SUN_DELTA[e.k];if(!d)return;bal+=evAmt(e)*d;
@@ -656,23 +656,23 @@ function renderStatement(){
   const s=accStats(a.id);
   $('sName').textContent=a.name;$('stHero').style.background=cardBg(a);
   $('sMeta').textContent=[a.bank,a.number?'A/C '+a.number:''].filter(Boolean).join(' · ')||'—';
-  $('sBal').dataset.k='acc:'+a.id;$('sBal').textContent=balTxt(s.bal,'acc:'+a.id);$('sC').textContent=tk(s.c);$('sI').textContent=tk(s.iR);$('sW').textContent=tk(s.w);$('sR').textContent=tk(s.rcv);$('sT').textContent=tk(s.tr);$('sP').textContent=s.nP?`${tk(s.iP)} (${s.nP})`:tk(0);
+  $('sBal').textContent=tk(s.bal);$('sC').textContent=tk(s.c);$('sI').textContent=tk(s.iR);$('sW').textContent=tk(s.w);$('sR').textContent=tk(s.rcv);$('sT').textContent=tk(s.tr);$('sP').textContent=s.nP?`${tk(s.iP)} (${s.nP})`:tk(0);
   const hasTx=db.txns.some(t=>t.accId===a.id||t.toAcc===a.id);
-  $('delAccBtn').disabled=hasTx;$('delAccBtn').innerHTML=hasTx?'🗑 Delete Account<small>Not possible: account has transactions</small>':'🗑 Delete Account';
+  $('delAccBtn').disabled=hasTx;$('delAccBtn').innerHTML=hasTx?'Delete Account<small>Not possible: account has transactions</small>':'Delete Account';
   // pending section
   const pl=pendingList().filter(t=>t.accId===a.id);
-  $('sPending').innerHTML=pl.length?`<div class="ledger"><div class="lg-h" style="background:var(--amber);color:var(--gold)">⏳ Pending incentive (${pl.length}) — not in balance yet</div>`+
-    pl.map(t=>`<div class="tx pending"><div><div class="tx-t">Incentive ${t.rate!=null?t.rate:db.rate}% <span class="tag tag-p">PENDING</span></div>
+  $('sPending').innerHTML=pl.length?`<div class="ledger"><div class="lg-h" style="background:var(--amber);color:var(--gold)">Pending incentive (${pl.length}) — not in balance yet</div>`+
+    pl.map(t=>`<div class="tx pending"><div><div class="tx-t">Incentive ${t.rate!=null?t.rate:db.rate}%</div>
       <div class="tx-s">For remittance ${tk(t.amount)} on ${fmtD(t.date)}${t.party?' · From '+esc(t.party):''}</div></div>
-      <div class="tx-r"><div class="tx-a gold">${tk(incOf(t))}</div><button class="btn btn-g btn-sm" style="margin-top:6px" onclick="openReceive('${t.id}')">✓ Received</button></div></div>`).join('')+'</div>':'';
+      <div class="tx-r"><div class="tx-a gold">${tk(incOf(t))}</div><button class="btn btn-g btn-sm" style="margin-top:6px" onclick="openReceive('${t.id}')">Received</button></div></div>`).join('')+'</div>':'';
   // posted ledger
   let bal=s.open;const rows=[];
   if(s.open)rows.push({date:a.created,amt:s.open,bal,title:'Opening balance'});
   allEvents().filter(e=>e.t.accId===a.id||e.t.toAcc===a.id).forEach(e=>{
     const t=e.t;
     if(e.k==='credit'){bal+=t.amount;rows.push({date:e.date,amt:t.amount,bal,title:'Remittance received',
-      sub:subJoin(t.party?'From '+esc(t.party):'',t.incStatus==='pending'?'<span class="tag tag-p">INCENTIVE PENDING</span>':'',esc(t.note))});}
-    else if(e.k==='inc'){const v=incOf(t);bal+=v;rows.push({date:e.date,amt:v,bal,title:'Incentive received '+(t.rate!=null?t.rate:db.rate)+'% <span class="tag tag-i">INCENTIVE</span>',
+      sub:subJoin(t.party?'From '+esc(t.party):'',t.incStatus==='pending'?'<span class="gold">Incentive pending</span>':'',esc(t.note))});}
+    else if(e.k==='inc'){const v=incOf(t);bal+=v;rows.push({date:e.date,amt:v,bal,title:'Incentive received '+(t.rate!=null?t.rate:db.rate)+'%',
       sub:'For remittance '+tk(t.amount)+' on '+fmtD(t.date)});}
     else if(e.k==='receive'){bal+=t.amount;rows.push({date:e.date,amt:t.amount,bal,title:'Fund received',sub:esc(t.note)});}
     else if(e.k==='withdraw'){bal-=t.amount;rows.push({date:e.date,amt:-t.amount,bal,title:'Cash withdrawal',sub:esc(t.note)});}
@@ -690,14 +690,14 @@ function renderPending(){
   $('pendSum').innerHTML=pl.length?`${pl.length} incentive${pl.length>1?'s':''} waiting · Total <b class="gold">${tk(tot)}</b>`:'';
   $('pendList').innerHTML=pl.length?pl.map(t=>`
     <div class="pi"><div>
-      <div class="a">🏦 ${esc(accName(t.accId))}</div>
+      <div class="a">${esc(accName(t.accId))}</div>
       <div class="d">Remittance ${tk(t.amount)} on ${fmtD(t.date)}${t.party?'<br>From: '+esc(t.party):''}${t.note?'<br>'+esc(t.note):''}<br>Rate ${t.rate!=null?t.rate:db.rate}%</div>
-    </div><div><div class="amt">${tk(incOf(t))}</div><button class="btn btn-g btn-sm" style="margin-top:6px" onclick="openReceive('${t.id}')">✓ Received</button></div></div>`).join('')
+    </div><div><div class="amt">${tk(incOf(t))}</div><button class="btn btn-g btn-sm" style="margin-top:6px" onclick="openReceive('${t.id}')">Received</button></div></div>`).join('')
     :'<div class="empty">No pending incentives.</div>';
 }
 function openReceive(id){
   const t=db.txns.find(x=>x.id===id);if(!t)return;rcvId=id;
-  $('rcvInfo').innerHTML=`<div class="st">🏦 ${esc(accName(t.accId))}</div><p style="margin:0">Remittance ${tk(t.amount)} on ${fmtD(t.date)}${t.party?' · From '+esc(t.party):''}<br>Incentive to add: <b class="green">${tk(incOf(t))}</b></p>`;
+  $('rcvInfo').innerHTML=`<div class="st">${esc(accName(t.accId))}</div><p style="margin:0">Remittance ${tk(t.amount)} on ${fmtD(t.date)}${t.party?' · From '+esc(t.party):''}<br>Incentive to add: <b class="green">${tk(incOf(t))}</b></p>`;
   $('rDate').value=today()<t.date?t.date:today();$('rDate').min=t.date;
   $('rcvModal').classList.add('show');
 }
@@ -737,10 +737,10 @@ function deleteAccount(){
 
 /* ---------- transactions ---------- */
 const TXN_UI={
-  credit:{title:'➕ Remittance In',cls:'btn btn-g'},
-  receive:{title:'➕ Fund Receive',cls:'btn btn-g'},
-  withdraw:{title:'➖ Cash Withdrawal',cls:'btn btn-r'},
-  cashin:{title:'➕ Add to Sunnah',cls:'btn btn-p'},
+  credit:{title:'Remittance In',cls:'btn btn-g'},
+  receive:{title:'Fund Receive',cls:'btn btn-g'},
+  withdraw:{title:'Cash Withdrawal',cls:'btn btn-r'},
+  cashin:{title:'Add to Sunnah',cls:'btn btn-p'},
   pay:{title:'Pay Sunnah',cls:'btn btn-pu'}
 };
 let payMethod='cash';
@@ -784,9 +784,9 @@ function resetTxnForm(){
 function txnHint(){
   const v=+$('tAmt').value||0,h=$('tHint');h.className='hint';h.textContent='';if(!v)return;
   if(txnType==='withdraw'||txnType==='move'){const id=txnType==='withdraw'?curAcc:$('tAcc').value;if(!id)return;const b=accStats(id).bal;
-    if(v>b){h.className='warn';h.textContent=`⚠ More than account balance (${tk(b)})`;}}
+    if(v>b){h.className='warn';h.textContent=`More than account balance (${tk(b)})`;}}
   else if(txnType==='pay'){const c=sunStats().bal;
-    if(v>c){h.className='warn';h.textContent=`⚠ More than Sunnah balance (${tk(c)})`;}}
+    if(v>c){h.className='warn';h.textContent=`More than Sunnah balance (${tk(c)})`;}}
 }
 function saveTxn(){
   const amt=+$('tAmt').value;if(!amt||amt<=0)return toast('Enter a valid amount');
@@ -858,7 +858,7 @@ document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>
 function switchTab(t){
   document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
   ['accounts','sunnah','history'].forEach(x=>$('tab-'+x).style.display=x===t?'block':'none');
-  $('pageTitle').textContent={accounts:'🏦 Accounts',sunnah:'👤 Sunnah',history:'📜 History'}[t];
+  $('pageTitle').textContent={accounts:'Accounts',sunnah:'Sunnah',history:'History'}[t];
 }
 function openSide(){closeMenu();$('side').classList.add('open');$('sideBg').classList.add('show');}
 function closeSide(){$('side').classList.remove('open');$('sideBg').classList.remove('show');}
@@ -935,10 +935,10 @@ function pushNow(){
 }
 function renderSync(){
   const box=$('syncBox');if(!box)return;renderPinBox();
-  if(!fbAuth){box.innerHTML='<div class="sync-st muted">'+(syncState==='error'?'⚠ '+esc(syncErr):'Not set up')+'</div>';return;}
+  if(!fbAuth){box.innerHTML='<div class="sync-st muted">'+(syncState==='error'?''+esc(syncErr):'Not set up')+'</div>';return;}
   if(!fbUser){box.innerHTML='<div class="sync-st muted">Not signed in</div>';return;}
-  const st=syncState==='ok'?`<span class="ok">✓ Synced</span>${lastSync?' · '+lastSync.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):''}`:
-    syncState==='error'?`<span class="err">⚠ ${esc(syncErr)}</span>`:'Syncing…';
+  const st=syncState==='ok'?`<span class="ok">Synced</span>${lastSync?' · '+lastSync.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):''}`:
+    syncState==='error'?`<span class="err">${esc(syncErr)}</span>`:'Syncing…';
   box.innerHTML=`<div class="sync-st">${esc(fbUser.email)}<br>${st}</div><button class="btn btn-o btn-sm" onclick="syncLogout()">Sign out</button>`;
   renderPinBox();
 }
@@ -1062,7 +1062,7 @@ async function checkUpdate(manual){
 }
 function renderUpdate(){
   const show=updInfo||webUpdate;
-  $('updBar').innerHTML=show?`<div class="upd-bar"><span>⬆️ <b>Update available</b>${updInfo?' · build '+updInfo.build:''}</span><button class="btn btn-p btn-sm" onclick="installUpdate()">${isNative?'Update':'Reload'}</button></div>`:'';
+  $('updBar').innerHTML=show?`<div class="upd-bar"><span><b>Update available</b>${updInfo?' · build '+updInfo.build:''}</span><button class="btn btn-p btn-sm" onclick="installUpdate()">${isNative?'Update':'Reload'}</button></div>`:'';
   const vb=$('verBox');if(vb)vb.innerHTML=`<div class="sync-st">${isNative?'Build '+(APP_BUILD||'dev'):'Web version'}${show?' · <span class="ok" style="color:var(--blue)">update available</span>':''}</div>
     <button class="btn btn-o btn-sm" onclick="${show?'installUpdate()':'checkUpdate(true)'}">${show?(isNative?'Update now':'Reload'):'Check for updates'}</button>`;
 }
