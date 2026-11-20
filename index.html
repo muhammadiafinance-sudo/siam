@@ -185,6 +185,10 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 .menu button:disabled{color:var(--muted);cursor:not-allowed;background:none}
 .menu button small{display:block;font-size:11px;color:var(--muted);font-weight:400}
 #tHint:empty{display:none}
+.seg{display:flex;gap:6px;background:#e3e7ee;padding:4px;border-radius:10px}
+.seg button{flex:1;border:0;background:transparent;padding:10px 6px;border-radius:8px;font-weight:600;font-size:14px;color:var(--muted);cursor:pointer}
+.seg button.on{background:#fff;color:var(--purple);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.tx-a.neu{color:var(--blue)}
 .ios-steps{font-size:14px;line-height:1.7}
 @media print{.stbar,header .hr,.tabs,.row,.back,.modal-bg,.pend-bar,.side,.bnav{display:none!important}body{background:#fff}.split{display:block!important}}
 </style>
@@ -214,8 +218,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 <nav class="side" id="side">
   <div class="side-head"><b>Menu</b><button onclick="closeSide()" title="Close">×</button></div>
   <button data-tab="accounts" class="active">🏦 Accounts</button>
-  <button data-tab="cash">💵 Cash</button>
-  <button data-tab="parties">👤 Parties</button>
+  <button data-tab="sunnah">👤 Sunnah</button>
   <button data-tab="history">📜 History</button>
   <hr>
   <button class="sbtn" onclick="closeSide();openPending()">⏳ Pending Incentive <span class="sbadge" id="sbadge"></span></button>
@@ -228,9 +231,9 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
     <div id="pendBar"></div>
     <div class="cards">
       <div class="card tapbal"><div class="lbl">Balance in Accounts</div><div class="val blue" id="tBal">0</div></div>
-      <div class="card tapbal"><div class="lbl">💵 Cash in Hand</div><div class="val purple" id="tCash">0</div></div>
+      <div class="card tapbal"><div class="lbl">Sunnah Balance</div><div class="val purple" id="tSun">0</div></div>
       <div class="card"><div class="lbl">Incentive Received</div><div class="val green" id="tInc">0</div></div>
-      <div class="card"><div class="lbl">Given to Parties</div><div class="val red" id="tPaid">0</div></div>
+      <div class="card"><div class="lbl">Paid to Sunnah</div><div class="val red" id="tPaid">0</div></div>
     </div>
 
     <h2 class="page-title" id="pageTitle">🏦 Accounts</h2>
@@ -243,15 +246,16 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
       <div id="accList" class="grid-list"></div>
     </div>
 
-    <div id="tab-cash" style="display:none"><div class="split"><div>
+    <div id="tab-sunnah" style="display:none"><div class="split"><div>
       <div class="hero cash">
-        <div class="t">Cash Wallet</div>
-        <div class="n">💵 Cash in Hand</div>
-        <div class="big tapbal" id="cBal">0</div><div class="lb">Available cash</div>
-        <div class="sub2"><div>Cash in<b id="cIn">0</b></div><div>Paid out<b id="cOut">0</b></div><div>Payments<b id="cCount">0</b></div></div>
+        <div class="n">Sunnah</div>
+        <div class="big tapbal" id="sBalS">0</div><div class="lb">Sunnah Balance</div>
+        <div class="sub2 tapbal"><div>In accounts<b id="sInAcc">0</b></div><div>Cash<b id="sCash">0</b></div><div>Paid<b id="sPaid">0</b></div></div>
       </div>
-      <div class="row"><button class="btn btn-pu" style="flex:1" onclick="openPay()">− Pay Cash to Party</button></div>
-      <div class="ledger"><div class="lg-title">Cash came from</div><div id="cSources"></div></div>
+      <div class="row">
+        <button class="btn btn-pu" style="flex:1" onclick="openPay()">Pay Sunnah</button>
+        <button class="btn btn-o" style="flex:1" onclick="openTxn('cashin')">+ Add Cash</button>
+      </div>
       </div><div>
       <div class="row">
         <input type="date" id="cFrom" style="flex:1;min-width:130px">
@@ -260,26 +264,20 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
       <div class="ledger" id="cLedger"></div>
     </div></div></div>
 
-    <div id="tab-parties" style="display:none">
-      <div class="row"><input class="search" id="partySearch" placeholder="Search party..."></div>
-      <div id="partyList" class="grid-list"></div>
-    </div>
-
     <div id="tab-history" style="display:none">
       <div class="row">
         <input type="date" id="hFrom" style="flex:1;min-width:130px">
         <input type="date" id="hTo" style="flex:1;min-width:130px">
         <select id="hType" style="flex:1;min-width:130px">
-          <option value="">All types</option><option value="credit">Remittance In</option><option value="inc">Incentive Received</option><option value="withdraw">Withdraw to Cash</option><option value="pay">Paid to Party</option>
+          <option value="">All types</option><option value="credit">Remittance In</option><option value="inc">Incentive Received</option><option value="withdraw">Withdraw to Cash</option><option value="transfer">Fund Transfer to Sunnah</option><option value="pay">Cash Paid to Sunnah</option><option value="cashin">Cash Added</option>
         </select>
       </div>
       <div class="cards">
         <div class="card"><div class="lbl">Remittance</div><div class="val green" id="hC">0</div></div>
         <div class="card"><div class="lbl">Incentive Received</div><div class="val green" id="hI">0</div></div>
         <div class="card"><div class="lbl">Withdrawn</div><div class="val blue" id="hW">0</div></div>
-        <div class="card"><div class="lbl">Paid to Parties</div><div class="val red" id="hP">0</div></div>
+        <div class="card"><div class="lbl">Paid to Sunnah</div><div class="val red" id="hP">0</div></div>
       </div>
-      <div id="hFilterNote"></div>
       <div class="ledger" id="hLedger"></div>
     </div>
   </div>
@@ -307,6 +305,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
         <div>Remittance<b id="sC">0</b></div>
         <div>Incentive received<b id="sI">0</b></div>
         <div>Withdrawn<b id="sW">0</b></div>
+        <div>Transferred<b id="sT">0</b></div>
         <div>Pending incentive<b id="sP">0</b></div>
       </div>
     </div>
@@ -314,6 +313,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
       <button class="btn btn-g" style="flex:1" onclick="openTxn('credit')">+ Remittance In</button>
       <button class="btn btn-r" style="flex:1" onclick="openTxn('withdraw')">− Withdraw to Cash</button>
     </div>
+    <div class="row"><button class="btn btn-pu" style="flex:1" onclick="openPay('transfer',curAcc)">Fund Transfer to Sunnah</button></div>
     <div id="sPending"></div>
     </div><div>
     <div class="ledger" id="sLedger"></div>
@@ -339,8 +339,9 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
   <div class="f"><label>Amount (৳) *</label><input type="number" id="tAmt" placeholder="0" oninput="txnHint()"></div>
   <div class="f" id="tPendWrap"><label class="chk"><input type="checkbox" id="tPend" onchange="txnHint()"> Incentive not received yet (pending)</label></div>
   <div class="hint" id="tHint" style="margin:-4px 0 10px"></div>
-  <div class="f" id="tPartyWrap"><label id="tPartyLbl">Party</label><input id="tParty" list="partyNames" placeholder="Name"></div>
-  <datalist id="partyNames"></datalist>
+  <div class="f" id="tMethodWrap"><label>Pay by</label>
+    <div class="seg"><button type="button" data-m="pay" onclick="setMethod('pay')">💵 Cash</button><button type="button" data-m="transfer" onclick="setMethod('transfer')">🏦 Fund Transfer</button></div></div>
+  <div class="f" id="tAccWrap"><label>From account</label><select id="tAcc" onchange="txnHint()"></select></div>
   <div class="f"><label>Note</label><input id="tNote"></div>
   <div class="mbtns"><button class="btn btn-o" onclick="closeModal('txnModal')">Cancel</button><button class="btn btn-p" id="tSave" onclick="saveTxn()">Save</button></div>
 </div></div>
@@ -367,8 +368,6 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
     <div class="row" style="margin:0"><input type="number" step="0.01" id="rateInput" style="flex:1"><button class="btn btn-p" onclick="saveRate()">Save</button></div></div>
   <div class="box"><div class="st">Balance Privacy</div>
     <label class="chk" style="background:#f6f7f9;border-color:var(--line);color:var(--text)"><input type="checkbox" id="hideBalInput" onchange="saveHideBal()"> Hide balances</label></div>
-  <div class="box"><div class="st">Opening Cash</div>
-    <div class="row" style="margin:0"><input type="number" id="openCashInput" style="flex:1"><button class="btn btn-p" onclick="saveOpenCash()">Save</button></div></div>
   <div class="box"><div class="st">💾 Backup</div>
     <div class="row" style="margin:0"><button class="btn btn-p" style="flex:1" onclick="exportData()">⬇️ Download</button><button class="btn btn-o" style="flex:1" onclick="$('importFile').click()">⬆️ Restore</button></div></div>
   <div class="box"><div class="st red">Reset App</div>
@@ -389,8 +388,8 @@ const KEY='remittance_tracker_v1';
 const isNative=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
 if(isNative)document.documentElement.classList.add('native');
 const $=id=>document.getElementById(id);
-let db={accounts:[],txns:[],rate:2.5,openCash:0,version:3};
-let curAcc=null,txnType='credit',editingAcc=null,rcvId=null,partyFilter=null;
+let db={accounts:[],txns:[],rate:2.5,openCash:0,version:4};
+let curAcc=null,txnType='credit',editingAcc=null,rcvId=null;
 
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const r2=n=>Math.round((n||0)*100)/100;
@@ -415,27 +414,43 @@ const byTime=(a,b)=>a.date===b.date?(a.created||0)-(b.created||0):(a.date<b.date
 function save(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){toast('Could not save!');}}
 function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.accounts)db=Object.assign({accounts:[],txns:[],rate:2.5,openCash:0},d);}catch(e){}migrate();}
 function migrate(){
-  const v=db.version||1;if(v>=3)return;
+  const v=db.version||1;if(v>=4)return;
+  if(v>=3)return migrate4();
   if(v<2){const extra=[];db.txns.forEach(t=>{
     if(t.type==='credit'&&t.inc==null)t.inc=r2(t.amount*db.rate/100);
     if(t.type==='withdraw'&&t.party){extra.push({id:uid(),accId:null,type:'pay',amount:t.amount,date:t.date,party:t.party,note:t.note||'',created:(t.created||Date.now())+2});t.party='';}
   });db.txns=db.txns.concat(extra);}
   db.txns.forEach(t=>{if(t.type==='credit'&&!t.incStatus){t.incStatus='received';t.incDate=t.date;t.incCreated=(t.created||0)+1;if(t.inc==null)t.inc=r2(t.amount*db.rate/100);}});
-  db.openCash=db.openCash||0;db.version=3;save();
+  migrate4();
+}
+// v4: one party (Sunnah). Old "opening cash" becomes a manual cash entry.
+function migrate4(){
+  const oc=+db.openCash||0;
+  if(oc>0){const first=db.txns.map(t=>t.date).sort()[0]||today();
+    db.txns.push({id:uid(),type:'cashin',accId:null,amount:oc,date:first,note:'Opening cash',created:0});}
+  db.openCash=0;db.version=4;save();
 }
 
 /* ---------- calculations ---------- */
 function accStats(id){
-  let c=0,iR=0,iP=0,nP=0,w=0;const a=accOf(id);const open=a?(+a.opening||0):0;
+  let c=0,iR=0,iP=0,nP=0,w=0,tr=0;const a=accOf(id);const open=a?(+a.opening||0):0;
   db.txns.forEach(t=>{if(t.accId!==id)return;
     if(t.type==='credit'){c+=t.amount;if(t.incStatus==='pending'){iP+=incOf(t);nP++;}else iR+=incOf(t);}
-    else if(t.type==='withdraw')w+=t.amount;});
-  return {c,iR,iP,nP,w,open,bal:open+c+iR-w};
+    else if(t.type==='withdraw')w+=t.amount;
+    else if(t.type==='transfer')tr+=t.amount;});
+  return {c,iR,iP,nP,w,tr,open,bal:open+c+iR-w-tr};
 }
-function cashStats(){
-  let inn=0,out=0,n=0;db.txns.forEach(t=>{if(t.type==='withdraw')inn+=t.amount;else if(t.type==='pay'){out+=t.amount;n++;}});
-  const open=+db.openCash||0;return {inn,out,n,open,bal:open+inn-out};
+// Sunnah balance = remittance + received incentive + manual cash − payments (cash or transfer).
+// Withdrawals only move part of it from accounts into cash.
+const SUN_DELTA={credit:1,inc:1,cashin:1,pay:-1,transfer:-1,withdraw:0};
+const CASH_DELTA={withdraw:1,cashin:1,pay:-1};
+const evAmt=e=>e.k==='inc'?incOf(e.t):e.t.amount;
+function sunStats(){
+  let bal=0,cash=0,paid=0;
+  allEvents().forEach(e=>{const a=evAmt(e);bal+=a*(SUN_DELTA[e.k]||0);cash+=a*(CASH_DELTA[e.k]||0);if(e.k==='pay'||e.k==='transfer')paid+=a;});
+  return {bal,cash,paid,inAcc:bal-cash};
 }
+const cashStats=()=>({bal:sunStats().cash});
 const pendingList=()=>db.txns.filter(t=>t.type==='credit'&&t.incStatus==='pending').sort(byTime);
 // every posted event (incentive becomes its own event on the day it was received)
 function allEvents(){
@@ -454,8 +469,8 @@ function ledgerHTML(rows,emptyMsg){
   let html='',last=null;
   rows.forEach(r=>{
     if(r.date!==last){html+=`<div class="lg-h">${fmtD(r.date)}</div>`;last=r.date;}
-    html+=`<div class="tx ${r.cls||''}"><div><div class="tx-t">${r.title}</div>${r.sub?`<div class="tx-s">${r.sub}</div>`:''}</div>
-      <div class="tx-r"><div class="tx-a ${r.amt>0?'pos':''}">${r.amtTxt||sTk(r.amt)}</div>${r.bal!=null?`<div class="tx-b tapbal">${balHtml(r.bal)}</div>`:''}</div></div>`;
+    html+=`<div class="tx ${r.cls&&r.cls!='neu'?r.cls:''}"><div><div class="tx-t">${r.title}</div>${r.sub?`<div class="tx-s">${r.sub}</div>`:''}</div>
+      <div class="tx-r"><div class="tx-a ${r.cls=='neu'?'neu':r.amt>0?'pos':''}">${r.amtTxt||sTk(r.amt)}</div>${r.bal!=null?`<div class="tx-b tapbal">${balHtml(r.bal)}</div>`:''}</div></div>`;
   });
   return html;
 }
@@ -464,13 +479,12 @@ const subJoin=(...p)=>p.filter(Boolean).join(' · ');
 /* ---------- home ---------- */
 function render(){
   let B=0,I=0;db.accounts.forEach(a=>{const s=accStats(a.id);B+=s.bal;I+=s.iR;});
-  const cs=cashStats(),pl=pendingList(),pAmt=pl.reduce((s,t)=>s+incOf(t),0);
-  $('tBal').textContent=balTxt(B);$('tCash').textContent=balTxt(cs.bal);$('tInc').textContent=tk(I);$('tPaid').textContent=tk(cs.out);
+  const ss=sunStats(),pl=pendingList(),pAmt=pl.reduce((s,t)=>s+incOf(t),0);
+  $('tBal').textContent=balTxt(B);$('tSun').textContent=balTxt(ss.bal);$('tInc').textContent=tk(I);$('tPaid').textContent=tk(ss.paid);
   const b=$('badge');b.textContent=pl.length>99?'99+':pl.length;b.classList.toggle('on',pl.length>0);
   const sb=$('sbadge');sb.textContent=b.textContent;sb.classList.toggle('on',pl.length>0);
   $('pendBar').innerHTML=pl.length?`<div class="pend-bar" onclick="openPending()"><span>⏳ <b>${pl.length}</b> incentive${pl.length>1?'s':''} pending · <b>${tk(pAmt)}</b></span><span class="blue">View ›</span></div>`:'';
-  renderAccounts();renderCash();renderParties();renderHistory();
-  $('partyNames').innerHTML=[...new Set(db.txns.filter(t=>t.type==='pay').map(t=>t.party).filter(Boolean))].map(p=>`<option value="${esc(p)}">`).join('');
+  renderAccounts();renderSunnah();renderHistory();
   if(curAcc)renderStatement();
   if($('pendModal').classList.contains('show'))renderPending();
 }
@@ -488,53 +502,41 @@ function renderAccounts(){
     </div>`;}).join('');
 }
 
-function renderCash(){
-  const cs=cashStats();
-  $('cBal').textContent=balTxt(cs.bal);$('cIn').textContent=tk(cs.inn);$('cOut').textContent=tk(cs.out);$('cCount').textContent=cs.n;
-  const src={};db.txns.filter(t=>t.type==='withdraw').forEach(t=>{src[t.accId]=(src[t.accId]||0)+t.amount;});
-  let sh=cs.open?`<div class="src"><span>Opening cash</span><b>${tk(cs.open)}</b></div>`:'';
-  sh+=Object.entries(src).sort((a,b)=>b[1]-a[1]).map(([id,v])=>`<div class="src"><span>🏦 ${esc(accName(id))}</span><b class="green">${tk(v)}</b></div>`).join('');
-  $('cSources').innerHTML=sh||'<div class="src muted">No cash yet. Withdraw from an account to add cash.</div>';
-  const f=$('cFrom').value,to=$('cTo').value;let bal=cs.open;const rows=[];
-  db.txns.filter(t=>t.type==='withdraw'||t.type==='pay').sort(byTime).forEach(t=>{
-    const amt=t.type==='withdraw'?t.amount:-t.amount;bal+=amt;
-    if((f&&t.date<f)||(to&&t.date>to))return;
-    rows.push({date:t.date,amt,bal,
-      title:t.type==='withdraw'?'Cash from '+esc(accName(t.accId)):'Paid to '+esc(t.party||'(No name)'),
-      sub:subJoin(t.type==='withdraw'?'Withdrawal':'Cash payment',esc(t.note))});
+function evRow(e,withAcc){
+  const t=e.t,a=evAmt(e),acc=withAcc?'🏦 '+esc(accName(t.accId)):'';
+  switch(e.k){
+    case 'credit':return {amt:a,title:'Remittance received',sub:subJoin(acc,t.incStatus==='pending'?'<span class="tag tag-p">INCENTIVE PENDING</span>':'',esc(t.note))};
+    case 'inc':return {amt:a,title:'Incentive received '+(t.rate!=null?t.rate:db.rate)+'%',sub:subJoin(acc,'For '+tk(t.amount)+' on '+fmtD(t.date))};
+    case 'withdraw':return {amt:-a,title:'Withdrawn to cash',sub:subJoin(acc,esc(t.note))};
+    case 'transfer':return {amt:-a,title:'Fund transfer to Sunnah',sub:subJoin(acc,esc(t.note))};
+    case 'pay':return {amt:-a,title:'Cash paid to Sunnah',sub:subJoin('💵 Cash',esc(t.note))};
+    case 'cashin':return {amt:a,title:'Cash added',sub:subJoin('💵 Cash',esc(t.note))};
+  }
+}
+function renderSunnah(){
+  const ss=sunStats();
+  $('sBalS').textContent=balTxt(ss.bal);$('sInAcc').textContent=balTxt(ss.inAcc);$('sCash').textContent=balTxt(ss.cash);$('sPaid').textContent=tk(ss.paid);
+  const f=$('cFrom').value,to=$('cTo').value;let bal=0;const rows=[];
+  allEvents().forEach(e=>{
+    const a=evAmt(e),d=SUN_DELTA[e.k]||0;bal+=a*d;
+    if((f&&e.date<f)||(to&&e.date>to))return;
+    const r=evRow(e,true);r.date=e.date;r.bal=bal;
+    if(e.k==='withdraw'){r.amtTxt='⇄ '+tk(a);r.amt=0;r.cls='neu';r.sub=subJoin(r.sub,'Account → Cash');}
+    rows.push(r);
   });
-  $('cLedger').innerHTML=ledgerHTML(rows.reverse(),'No cash entries');
+  $('cLedger').innerHTML=ledgerHTML(rows.reverse(),'No transactions');
 }
-
-function renderParties(){
-  const q=$('partySearch').value.toLowerCase(),map={};
-  db.txns.filter(t=>t.type==='pay').forEach(t=>{const p=t.party||'(No name)';map[p]=map[p]||{amt:0,n:0,last:''};map[p].amt+=t.amount;map[p].n++;if(t.date>map[p].last)map[p].last=t.date;});
-  const arr=Object.entries(map).filter(([p])=>p.toLowerCase().includes(q)).sort((a,b)=>b[1].amt-a[1].amt);
-  if(!arr.length){$('partyList').innerHTML='<div class="empty">No payments yet.</div>';return;}
-  $('partyList').innerHTML=arr.map(([p,v])=>`
-    <div class="acct" data-p="${esc(p)}" onclick="showParty(this.dataset.p)">
-      <div class="acct-top"><div class="acct-nm">👤 ${esc(p)}<span> · ${v.n} payment(s)</span></div><div class="chev">›</div></div>
-      <div class="acct-bal red">${tk(v.amt)}</div><div class="acct-lbl">Cash given · last on ${fmtD(v.last)}</div>
-    </div>`).join('');
-}
-function showParty(p){switchTab('history');$('hType').value='pay';$('hFrom').value='';$('hTo').value='';partyFilter=p;renderHistory();}
 
 function renderHistory(){
   const f=$('hFrom').value,to=$('hTo').value,ty=$('hType').value;
   let c=0,i=0,w=0,p=0;const rows=[];
   allEvents().forEach(e=>{
-    const t=e.t;
     if((f&&e.date<f)||(to&&e.date>to)||(ty&&e.k!==ty))return;
-    if(partyFilter&&!(e.k==='pay'&&(t.party||'(No name)')===partyFilter))return;
-    if(e.k==='credit'){c+=t.amount;rows.push({date:e.date,amt:t.amount,title:'Remittance received',cls:t.incStatus==='pending'?'':'',
-      sub:subJoin('🏦 '+esc(accName(t.accId)),t.party?'From '+esc(t.party):'',t.incStatus==='pending'?'<span class="tag tag-p">INCENTIVE PENDING</span>':'',esc(t.note))});}
-    else if(e.k==='inc'){const a=incOf(t);i+=a;rows.push({date:e.date,amt:a,title:'Incentive received '+(t.rate!=null?t.rate:db.rate)+'%',
-      sub:subJoin('🏦 '+esc(accName(t.accId)),'For '+tk(t.amount)+' on '+fmtD(t.date))});}
-    else if(e.k==='withdraw'){w+=t.amount;rows.push({date:e.date,amt:-t.amount,title:'Withdrawal to cash',sub:subJoin('🏦 '+esc(accName(t.accId)),esc(t.note))});}
-    else{p+=t.amount;rows.push({date:e.date,amt:-t.amount,title:'Paid to '+esc(t.party||'(No name)'),sub:subJoin('💵 From cash',esc(t.note))});}
+    const a=evAmt(e);
+    if(e.k==='credit')c+=a;else if(e.k==='inc')i+=a;else if(e.k==='withdraw')w+=a;else if(e.k==='pay'||e.k==='transfer')p+=a;
+    const r=evRow(e,true);r.date=e.date;rows.push(r);
   });
   $('hC').textContent=tk(c);$('hI').textContent=tk(i);$('hW').textContent=tk(w);$('hP').textContent=tk(p);
-  $('hFilterNote').innerHTML=partyFilter?`<div class="pend-bar" style="cursor:default"><span>Party: <b>${esc(partyFilter)}</b></span><button class="btn btn-o btn-sm" onclick="partyFilter=null;renderHistory()">Clear</button></div>`:'';
   $('hLedger').innerHTML=ledgerHTML(rows.reverse(),'No transactions');
 }
 
@@ -546,7 +548,7 @@ function renderStatement(){
   const s=accStats(a.id);
   $('sName').textContent=a.name;
   $('sMeta').textContent=[a.bank,a.number?'A/C '+a.number:''].filter(Boolean).join(' · ')||'—';
-  $('sBal').textContent=balTxt(s.bal);$('sC').textContent=tk(s.c);$('sI').textContent=tk(s.iR);$('sW').textContent=tk(s.w);$('sP').textContent=s.nP?`${tk(s.iP)} (${s.nP})`:tk(0);
+  $('sBal').textContent=balTxt(s.bal);$('sC').textContent=tk(s.c);$('sI').textContent=tk(s.iR);$('sW').textContent=tk(s.w);$('sT').textContent=tk(s.tr);$('sP').textContent=s.nP?`${tk(s.iP)} (${s.nP})`:tk(0);
   const hasTx=db.txns.some(t=>t.accId===a.id);
   $('delAccBtn').disabled=hasTx;$('delAccBtn').innerHTML=hasTx?'🗑 Delete Account<small>Not possible: account has transactions</small>':'🗑 Delete Account';
   // pending section
@@ -564,7 +566,8 @@ function renderStatement(){
       sub:subJoin(t.party?'From '+esc(t.party):'',t.incStatus==='pending'?'<span class="tag tag-p">INCENTIVE PENDING</span>':'',esc(t.note))});}
     else if(e.k==='inc'){const v=incOf(t);bal+=v;rows.push({date:e.date,amt:v,bal,title:'Incentive received '+(t.rate!=null?t.rate:db.rate)+'% <span class="tag tag-i">INCENTIVE</span>',
       sub:'For remittance '+tk(t.amount)+' on '+fmtD(t.date)});}
-    else if(e.k==='withdraw'){bal-=t.amount;rows.push({date:e.date,amt:-t.amount,bal,title:'Withdrawal to cash',sub:esc(t.note)});}
+    else if(e.k==='withdraw'){bal-=t.amount;rows.push({date:e.date,amt:-t.amount,bal,title:'Withdrawn to cash',sub:esc(t.note)});}
+    else if(e.k==='transfer'){bal-=t.amount;rows.push({date:e.date,amt:-t.amount,bal,title:'Fund transfer to Sunnah',sub:esc(t.note)});}
   });
   $('sLedger').innerHTML='<div class="lg-title">Transactions</div>'+ledgerHTML(rows.reverse(),'No transactions yet.');
 }
@@ -619,50 +622,61 @@ function deleteAccount(){
 }
 
 /* ---------- transactions ---------- */
+const TXN_UI={
+  credit:{title:'➕ Remittance In',cls:'btn btn-g'},
+  withdraw:{title:'➖ Withdraw to Cash',cls:'btn btn-r'},
+  cashin:{title:'💵 Add Cash',cls:'btn btn-p'},
+  pay:{title:'Pay Sunnah',cls:'btn btn-pu'},
+  transfer:{title:'Pay Sunnah',cls:'btn btn-pu'}
+};
+function setMethod(m){
+  txnType=m;
+  document.querySelectorAll('#tMethodWrap [data-m]').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
+  $('tAccWrap').style.display=m==='transfer'?'block':'none';
+  txnHint();
+}
 function openTxn(type){
   txnType=type;
   $('tPendWrap').style.display=type==='credit'?'block':'none';
-  $('tPartyWrap').style.display=type==='credit'?'block':'none';
-  if(type==='credit'){$('txnTitle').textContent='➕ Remittance In';$('tPartyLbl').textContent='Sender / Reference';$('tSave').className='btn btn-g';}
-  else{$('txnTitle').textContent='➖ Withdraw to Cash';$('tSave').className='btn btn-r';}
+  $('tMethodWrap').style.display='none';$('tAccWrap').style.display='none';
+  $('txnTitle').textContent=TXN_UI[type].title;$('tSave').className=TXN_UI[type].cls;
   resetTxnForm();
 }
-function openPay(){
-  txnType='pay';$('tPendWrap').style.display='none';$('tPartyWrap').style.display='block';
-  $('txnTitle').textContent='👤 Pay Cash to Party';$('tPartyLbl').textContent='Party Name *';$('tSave').className='btn btn-pu';
-  resetTxnForm();
+function openPay(method,accId){
+  $('tPendWrap').style.display='none';$('tMethodWrap').style.display='block';
+  $('tAcc').innerHTML=db.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}${esc(last4(a.number))}</option>`).join('');
+  if(accId)$('tAcc').value=accId;
+  $('txnTitle').textContent='Pay Sunnah';$('tSave').className='btn btn-pu';
+  resetTxnForm();setMethod(method||'pay');
 }
 function resetTxnForm(){
-  $('tDate').value=today();$('tAmt').value='';$('tParty').value='';$('tNote').value='';$('tPend').checked=false;
+  $('tDate').value=today();$('tAmt').value='';$('tNote').value='';$('tPend').checked=false;
   $('txnModal').classList.add('show');txnHint();setTimeout(()=>$('tAmt').focus(),100);
 }
 function txnHint(){
-  const v=+$('tAmt').value||0,h=$('tHint');h.className='hint';
-  h.textContent='';
-  if(txnType==='credit')return;
-  if(txnType==='withdraw'){const s=accStats(curAcc),nb=s.bal-v;
-    if(v&&nb<0){h.className='warn';h.textContent=`⚠ More than account balance (${tk(s.bal)})`;}}
-  else{const c=cashStats().bal,nc=c-v;
-    if(v&&nc<0){h.className='warn';h.textContent=`⚠ More than cash in hand (${tk(c)})`;}}
+  const v=+$('tAmt').value||0,h=$('tHint');h.className='hint';h.textContent='';if(!v)return;
+  if(txnType==='withdraw'||txnType==='transfer'){const id=txnType==='withdraw'?curAcc:$('tAcc').value;if(!id)return;const b=accStats(id).bal;
+    if(v>b){h.className='warn';h.textContent=`⚠ More than account balance (${tk(b)})`;}}
+  else if(txnType==='pay'){const c=sunStats().cash;
+    if(v>c){h.className='warn';h.textContent=`⚠ More than cash (${tk(c)})`;}}
 }
 function saveTxn(){
   const amt=+$('tAmt').value;if(!amt||amt<=0)return toast('Enter a valid amount');
   const date=$('tDate').value;if(!date)return toast('Select date');
-  const t={id:uid(),type:txnType,amount:amt,date,note:$('tNote').value.trim(),created:Date.now()};
+  const t={id:uid(),type:txnType,amount:amt,date,note:$('tNote').value.trim(),created:Date.now(),accId:null};
   if(txnType==='credit'){
-    t.accId=curAcc;t.party=$('tParty').value.trim();t.rate=db.rate;t.inc=r2(amt*db.rate/100);
+    t.accId=curAcc;t.rate=db.rate;t.inc=r2(amt*db.rate/100);
     if($('tPend').checked)t.incStatus='pending';else{t.incStatus='received';t.incDate=date;t.incCreated=t.created+1;}
-  }else if(txnType==='withdraw'){
-    if(amt>accStats(curAcc).bal&&!confirm('Amount is more than account balance. Save anyway?'))return;
-    t.accId=curAcc;
-  }else{
-    t.party=$('tParty').value.trim();if(!t.party)return toast('Enter party name');
-    if(amt>cashStats().bal&&!confirm('Amount is more than cash in hand. Save anyway?'))return;
-    t.accId=null;
+  }else if(txnType==='withdraw'||txnType==='transfer'){
+    t.accId=txnType==='withdraw'?curAcc:$('tAcc').value;
+    if(!t.accId)return toast('Select an account');
+    if(amt>accStats(t.accId).bal&&!confirm('Amount is more than account balance. Save anyway?'))return;
+  }else if(txnType==='pay'){
+    if(amt>sunStats().cash&&!confirm('Amount is more than cash. Save anyway?'))return;
   }
   if(!confirm('Save this entry? It cannot be deleted later.'))return;
   db.txns.push(t);save();closeModal('txnModal');render();
-  toast(txnType==='credit'?(t.incStatus==='pending'?'Remittance added · incentive pending':'Remittance + incentive added'):txnType==='withdraw'?'Moved to Cash':'Paid to party');
+  toast({credit:t.incStatus==='pending'?'Remittance added · incentive pending':'Remittance + incentive added',withdraw:'Moved to cash',transfer:'Fund transfer to Sunnah saved',pay:'Cash paid to Sunnah',cashin:'Cash added'}[txnType]);
 }
 
 /* ---------- tap to show balance ---------- */
@@ -679,9 +693,8 @@ function toggleMenu(e){e.stopPropagation();$('accMenu').classList.remove('show')
 function toggleAccMenu(e){e.stopPropagation();$('menu').classList.remove('show');$('accMenu').classList.toggle('show');}
 function closeMenu(){$('menu').classList.remove('show');$('accMenu').classList.remove('show');}
 document.addEventListener('click',e=>{if(!e.target.closest('.menu'))closeMenu();});
-function openSettings(){closeMenu();$('rateInput').value=db.rate;$('openCashInput').value=db.openCash||'';$('hideBalInput').checked=db.hideBal!==false;$('setModal').classList.add('show');}
+function openSettings(){closeMenu();$('rateInput').value=db.rate;$('hideBalInput').checked=db.hideBal!==false;$('setModal').classList.add('show');}
 function saveRate(){const r=parseFloat($('rateInput').value);if(isNaN(r)||r<0)return toast('Invalid rate');db.rate=r;save();render();toast('Rate saved');}
-function saveOpenCash(){db.openCash=+$('openCashInput').value||0;save();render();toast('Opening cash saved');}
 async function exportData(){
   closeMenu();
   if(isNative){
@@ -705,7 +718,7 @@ function importData(e){
 function clearAll(){
   if(!confirm('Erase ALL accounts and transactions? Download a backup first!'))return;
   if(prompt('Type ERASE to confirm')!=='ERASE')return toast('Cancelled');
-  db={accounts:[],txns:[],rate:db.rate,openCash:0,version:3};save();closeModal('setModal');goHome();toast('All data erased');
+  db={accounts:[],txns:[],rate:db.rate,openCash:0,version:4,hideBal:db.hideBal};save();closeModal('setModal');goHome();toast('All data erased');
 }
 
 /* ---------- UI wiring ---------- */
@@ -713,16 +726,16 @@ function closeModal(id){$(id).classList.remove('show');}
 document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show');}));
 function switchTab(t){
   document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
-  ['accounts','cash','parties','history'].forEach(x=>$('tab-'+x).style.display=x===t?'block':'none');
-  $('pageTitle').textContent={accounts:'🏦 Accounts',cash:'💵 Cash',parties:'👤 Parties',history:'📜 History'}[t];
+  ['accounts','sunnah','history'].forEach(x=>$('tab-'+x).style.display=x===t?'block':'none');
+  $('pageTitle').textContent={accounts:'🏦 Accounts',sunnah:'👤 Sunnah',history:'📜 History'}[t];
 }
 function openSide(){closeMenu();$('side').classList.add('open');$('sideBg').classList.add('show');}
 function closeSide(){$('side').classList.remove('open');$('sideBg').classList.remove('show');}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeSide();});
-document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{closeSide();partyFilter=null;if(curAcc)goHome();switchTab(b.dataset.tab);renderHistory();window.scrollTo(0,0);});
-$('accSearch').oninput=renderAccounts;$('partySearch').oninput=renderParties;
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{closeSide();if(curAcc)goHome();switchTab(b.dataset.tab);renderHistory();window.scrollTo(0,0);});
+$('accSearch').oninput=renderAccounts;
 ['hFrom','hTo','hType'].forEach(id=>$(id).onchange=renderHistory);
-['cFrom','cTo'].forEach(id=>$(id).onchange=renderCash);
+['cFrom','cTo'].forEach(id=>$(id).onchange=renderSunnah);
 
 /* scale up on phones so the app looks like a normal-size mobile app */
 function fitMobile(){const w=window.innerWidth,z=w<768?Math.min(1.6,Math.max(1,w/410)):1;const r=document.documentElement;r.style.zoom=z;r.style.setProperty("--vh",(window.innerHeight/z/100)+"px");}
@@ -756,7 +769,6 @@ if(isNative){
     if($('side').classList.contains('open'))return closeSide();
     if(document.querySelector('.menu.show'))return closeMenu();
     if(curAcc)return goHome();
-    if(partyFilter){partyFilter=null;return renderHistory();}
     if($('tab-accounts').style.display==='none'){switchTab('accounts');return window.scrollTo(0,0);}
     A.minimizeApp?A.minimizeApp():A.exitApp();
   });
