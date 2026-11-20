@@ -113,7 +113,7 @@ input[type=checkbox]{width:20px;height:20px;flex:none}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1d21;color:#fff;padding:10px 18px;border-radius:20px;font-size:14px;opacity:0;transition:.3s;z-index:99;pointer-events:none}
 .toast.show{opacity:1}
 .box{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
-.box .st{font-weight:700;margin-bottom:4px}
+.box .st{font-weight:700;margin-bottom:8px}
 .box p{font-size:12px;color:var(--muted);margin-bottom:8px}
 .src{display:flex;justify-content:space-between;padding:10px 16px;border-top:1px solid var(--line);font-size:14px}
 /* ===== Responsive layout ===== */
@@ -184,6 +184,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 #accMenu{top:44px;z-index:25}
 .menu button:disabled{color:var(--muted);cursor:not-allowed;background:none}
 .menu button small{display:block;font-size:11px;color:var(--muted);font-weight:400}
+#tHint:empty{display:none}
 .ios-steps{font-size:14px;line-height:1.7}
 @media print{.stbar,header .hr,.tabs,.row,.back,.modal-bg,.pend-bar,.side,.bnav{display:none!important}body{background:#fff}.split{display:block!important}}
 </style>
@@ -221,7 +222,6 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
   <button class="sbtn" onclick="closeSide();openSettings()">⚙️ Settings</button>
   <button class="sbtn printBtn" onclick="closeSide();window.print()">🖨️ Print</button>
   <button class="sbtn installBtn" onclick="closeSide();installApp()" style="display:none">📲 Install App</button>
-  <div class="foot">🔒 Entries are locked and cannot be deleted, like a bank statement.</div>
 </nav>
 <div class="wrap">
   <div id="home">
@@ -317,7 +317,6 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
     <div id="sPending"></div>
     </div><div>
     <div class="ledger" id="sLedger"></div>
-    <div class="lock">🔒 Entries are locked and cannot be deleted, like a bank statement.</div>
     </div></div>
   </div>
 </div>
@@ -326,9 +325,9 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 <!-- Account modal -->
 <div class="modal-bg" id="accModal"><div class="modal">
   <h3><span id="accModalTitle">Add Account</span><button class="x" onclick="closeModal('accModal')">×</button></h3>
-  <div class="f"><label>Account Name *</label><input id="aName" placeholder="e.g. Coding"></div>
-  <div class="f"><label>Account Number</label><input id="aNum" placeholder="e.g. 1234567890"></div>
-  <div class="f"><label>Bank / Type</label><input id="aBank" placeholder="e.g. DBBL, Islami Bank"></div>
+  <div class="f"><label>Account Name *</label><input id="aName"></div>
+  <div class="f"><label>Account Number</label><input id="aNum"></div>
+  <div class="f"><label>Bank / Type</label><input id="aBank"></div>
   <div class="f"><label>Opening Balance (optional)</label><input type="number" id="aOpen" placeholder="0"><div class="hint" id="aOpenHint"></div></div>
   <div class="mbtns"><button class="btn btn-o" onclick="closeModal('accModal')">Cancel</button><button class="btn btn-p" onclick="saveAccount()">Save</button></div>
 </div></div>
@@ -342,8 +341,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
   <div class="hint" id="tHint" style="margin:-4px 0 10px"></div>
   <div class="f" id="tPartyWrap"><label id="tPartyLbl">Party</label><input id="tParty" list="partyNames" placeholder="Name"></div>
   <datalist id="partyNames"></datalist>
-  <div class="f"><label>Note</label><input id="tNote" placeholder="Optional"></div>
-  <div class="hint">🔒 After saving, this entry cannot be deleted.</div>
+  <div class="f"><label>Note</label><input id="tNote"></div>
   <div class="mbtns"><button class="btn btn-o" onclick="closeModal('txnModal')">Cancel</button><button class="btn btn-p" id="tSave" onclick="saveTxn()">Save</button></div>
 </div></div>
 
@@ -359,22 +357,21 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
   <h3><span>Incentive Received</span><button class="x" onclick="closeModal('rcvModal')">×</button></h3>
   <div id="rcvInfo" class="box"></div>
   <div class="f"><label>Received Date *</label><input type="date" id="rDate"></div>
-  <div class="hint">The incentive will be added to the account balance on this date.</div>
   <div class="mbtns"><button class="btn btn-o" onclick="closeModal('rcvModal')">Cancel</button><button class="btn btn-g" onclick="confirmReceive()">✓ Add to Balance</button></div>
 </div></div>
 
 <!-- Settings modal -->
 <div class="modal-bg" id="setModal"><div class="modal">
   <h3><span>⚙️ Settings</span><button class="x" onclick="closeModal('setModal')">×</button></h3>
-  <div class="box"><div class="st">Incentive Rate (%)</div><p>Applies to new remittance entries only.</p>
+  <div class="box"><div class="st">Incentive Rate (%)</div>
     <div class="row" style="margin:0"><input type="number" step="0.01" id="rateInput" style="flex:1"><button class="btn btn-p" onclick="saveRate()">Save</button></div></div>
-  <div class="box"><div class="st">Balance Privacy</div><p>Hide balances until you tap them. They hide again after 10 seconds.</p>
-    <label class="chk" style="background:#f6f7f9;border-color:var(--line);color:var(--text)"><input type="checkbox" id="hideBalInput" onchange="saveHideBal()"> Hide balances (tap to show)</label></div>
-  <div class="box"><div class="st">Opening Cash</div><p>Cash you already had in hand before using this app.</p>
+  <div class="box"><div class="st">Balance Privacy</div>
+    <label class="chk" style="background:#f6f7f9;border-color:var(--line);color:var(--text)"><input type="checkbox" id="hideBalInput" onchange="saveHideBal()"> Hide balances</label></div>
+  <div class="box"><div class="st">Opening Cash</div>
     <div class="row" style="margin:0"><input type="number" id="openCashInput" style="flex:1"><button class="btn btn-p" onclick="saveOpenCash()">Save</button></div></div>
-  <div class="box"><div class="st">💾 Backup</div><p>Save all your data to a file, or restore it from a backup file.</p>
+  <div class="box"><div class="st">💾 Backup</div>
     <div class="row" style="margin:0"><button class="btn btn-p" style="flex:1" onclick="exportData()">⬇️ Download</button><button class="btn btn-o" style="flex:1" onclick="$('importFile').click()">⬆️ Restore</button></div></div>
-  <div class="box"><div class="st red">Reset App</div><p>Erase everything and start fresh. Download a backup first.</p>
+  <div class="box"><div class="st red">Reset App</div>
     <button class="btn btn-r btn-sm" onclick="clearAll()">Erase All Data</button></div>
 </div></div>
 
@@ -382,7 +379,6 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 <div class="modal-bg" id="iosModal"><div class="modal">
   <h3><span>📲 Install on iPhone / iPad</span><button class="x" onclick="closeModal('iosModal')">×</button></h3>
   <div class="ios-steps">1. Open this page in <b>Safari</b>.<br>2. Tap the <b>Share</b> button (square with ↑ arrow).<br>3. Choose <b>Add to Home Screen</b>, then tap <b>Add</b>.</div>
-  <div class="hint" style="margin-top:10px">Your data stays on this device. Download a backup regularly (⚙️ Settings → Backup).</div>
   <div class="mbtns"><button class="btn btn-p" onclick="closeModal('iosModal')">OK</button></div>
 </div></div>
 
@@ -482,7 +478,7 @@ function render(){
 function renderAccounts(){
   const q=$('accSearch').value.toLowerCase();
   const list=db.accounts.filter(a=>(a.name+' '+(a.number||'')+' '+(a.bank||'')).toLowerCase().includes(q));
-  if(!db.accounts.length){$('accList').innerHTML='<div class="empty">No accounts yet.<br>Tap <b>+ Add Account</b> to add your first one.</div>';return;}
+  if(!db.accounts.length){$('accList').innerHTML='<div class="empty">No accounts yet.</div>';return;}
   if(!list.length){$('accList').innerHTML='<div class="empty">No matching account.</div>';return;}
   $('accList').innerHTML=list.map(a=>{const s=accStats(a.id);return `
     <div class="acct" onclick="openAccount('${a.id}')">
@@ -514,7 +510,7 @@ function renderParties(){
   const q=$('partySearch').value.toLowerCase(),map={};
   db.txns.filter(t=>t.type==='pay').forEach(t=>{const p=t.party||'(No name)';map[p]=map[p]||{amt:0,n:0,last:''};map[p].amt+=t.amount;map[p].n++;if(t.date>map[p].last)map[p].last=t.date;});
   const arr=Object.entries(map).filter(([p])=>p.toLowerCase().includes(q)).sort((a,b)=>b[1].amt-a[1].amt);
-  if(!arr.length){$('partyList').innerHTML='<div class="empty">No cash given to any party yet.<br>Go to <b>💵 Cash</b> → Pay Cash to Party.</div>';return;}
+  if(!arr.length){$('partyList').innerHTML='<div class="empty">No payments yet.</div>';return;}
   $('partyList').innerHTML=arr.map(([p,v])=>`
     <div class="acct" data-p="${esc(p)}" onclick="showParty(this.dataset.p)">
       <div class="acct-top"><div class="acct-nm">👤 ${esc(p)}<span> · ${v.n} payment(s)</span></div><div class="chev">›</div></div>
@@ -583,7 +579,7 @@ function renderPending(){
       <div class="a">🏦 ${esc(accName(t.accId))}</div>
       <div class="d">Remittance ${tk(t.amount)} on ${fmtD(t.date)}${t.party?'<br>From: '+esc(t.party):''}${t.note?'<br>'+esc(t.note):''}<br>Rate ${t.rate!=null?t.rate:db.rate}%</div>
     </div><div><div class="amt">${tk(incOf(t))}</div><button class="btn btn-g btn-sm" style="margin-top:6px" onclick="openReceive('${t.id}')">✓ Received</button></div></div>`).join('')
-    :'<div class="empty">🎉 No pending incentives.<br>All incentives have been received.</div>';
+    :'<div class="empty">No pending incentives.</div>';
 }
 function openReceive(id){
   const t=db.txns.find(x=>x.id===id);if(!t)return;rcvId=id;
@@ -604,7 +600,7 @@ function openAccModal(acc){
   editingAcc=acc||null;$('accModalTitle').textContent=acc?'Edit Account':'Add Account';
   $('aName').value=acc?acc.name:'';$('aNum').value=acc?acc.number||'':'';$('aBank').value=acc?acc.bank||'':'';$('aOpen').value=acc&&acc.opening?acc.opening:'';
   const locked=acc&&db.txns.some(t=>t.accId===acc.id);
-  $('aOpen').disabled=!!locked;$('aOpenHint').textContent=locked?'🔒 Locked because this account has transactions.':'';
+  $('aOpen').disabled=!!locked;
   $('accModal').classList.add('show');setTimeout(()=>$('aName').focus(),100);
 }
 function saveAccount(){
@@ -642,16 +638,12 @@ function resetTxnForm(){
 }
 function txnHint(){
   const v=+$('tAmt').value||0,h=$('tHint');h.className='hint';
-  if(txnType==='credit'){const s=accStats(curAcc),ic=r2(v*db.rate/100);
-    if(!v)h.textContent=`Incentive rate: ${db.rate}%`;
-    else if($('tPend').checked)h.innerHTML=`Added to balance now: <b>${tk(v)}</b> · Incentive <b class="gold">${tk(ic)}</b> will stay pending · New balance: ${tk(s.bal+v)}`;
-    else h.innerHTML=`Remittance ${tk(v)} + Incentive ${tk(ic)} = <b>${tk(v+ic)}</b> · New balance: ${tk(s.bal+v+ic)}`;}
-  else if(txnType==='withdraw'){const s=accStats(curAcc),nb=s.bal-v;
-    if(v&&nb<0){h.className='warn';h.textContent=`⚠ More than account balance (${tk(s.bal)})`;}
-    else h.textContent=v?`Account left: ${tk(nb)} · Cash will become: ${tk(cashStats().bal+v)}`:`Available in account: ${tk(s.bal)}`;}
+  h.textContent='';
+  if(txnType==='credit')return;
+  if(txnType==='withdraw'){const s=accStats(curAcc),nb=s.bal-v;
+    if(v&&nb<0){h.className='warn';h.textContent=`⚠ More than account balance (${tk(s.bal)})`;}}
   else{const c=cashStats().bal,nc=c-v;
-    if(v&&nc<0){h.className='warn';h.textContent=`⚠ More than cash in hand (${tk(c)})`;}
-    else h.textContent=v?`Cash left: ${tk(nc)}`:`Cash in hand: ${tk(c)}`;}
+    if(v&&nc<0){h.className='warn';h.textContent=`⚠ More than cash in hand (${tk(c)})`;}}
 }
 function saveTxn(){
   const amt=+$('tAmt').value;if(!amt||amt<=0)return toast('Enter a valid amount');
