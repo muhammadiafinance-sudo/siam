@@ -34,6 +34,9 @@ jobs:
       - name: Prepare Android project
         run: |
           npm run build:www
+          # stamp the build number so the app can tell when a newer APK is released
+          sed -i "s/const APP_BUILD=0;/const APP_BUILD=${{ github.run_number }};/" www/index.html
+          grep -c "const APP_BUILD=${{ github.run_number }};" www/index.html
           npx cap add android
           npx capacitor-assets generate --android
           npx cap sync android

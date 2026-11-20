@@ -189,6 +189,9 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 .seg button{flex:1;border:0;background:transparent;padding:10px 6px;border-radius:8px;font-weight:600;font-size:14px;color:var(--muted);cursor:pointer}
 .seg button.on{background:#fff;color:var(--purple);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .tx-a.neu{color:var(--blue)}
+.upd-bar{background:#e7f1fb;border:1px solid #b9d7f3;border-radius:12px;padding:10px 12px 10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px}
+.upd-bar b{color:var(--navy)}
+@media print{.upd-bar{display:none!important}}
 .lock-scr{position:fixed;inset:0;z-index:200;background:linear-gradient(160deg,var(--navy),var(--navy2));color:#fff;display:none;flex-direction:column;align-items:center;justify-content:center;padding:calc(20px + var(--safe-area-inset-top,env(safe-area-inset-top))) 20px 20px;user-select:none;-webkit-user-select:none}
 .lock-scr.show{display:flex}
 .lk-title{font-size:24px;font-weight:700;margin-bottom:28px}
@@ -261,6 +264,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 </nav>
 <div class="wrap">
   <div id="home">
+    <div id="updBar"></div>
     <div id="pendBar"></div>
     <div class="cards">
       <div class="card tapbal"><div class="lbl">Balance in Accounts</div><div class="val blue" id="tBal">0</div></div>
@@ -409,6 +413,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
   <div class="box"><div class="st">🔒 App Lock PIN</div><div id="pinBox"></div></div>
   <div class="box"><div class="st">💾 Backup</div>
     <div class="row" style="margin:0"><button class="btn btn-p" style="flex:1" onclick="exportData()">⬇️ Download</button><button class="btn btn-o" style="flex:1" onclick="$('importFile').click()">⬆️ Restore</button></div></div>
+  <div class="box"><div class="st">ℹ️ App Version</div><div id="verBox"></div></div>
   <div class="box"><div class="st red">Reset App</div>
     <button class="btn btn-r btn-sm" onclick="clearAll()">Erase All Data</button></div>
 </div></div>
@@ -450,6 +455,8 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 <script src="vendor/firebase.js"></script>
 <script>
 const KEY='remittance_tracker_v1';
+const APP_BUILD=0; // set by the Android build workflow (GitHub run number)
+const REPO='muhammadiafinance-sudo/siam',APK_URL='https://github.com/'+REPO+'/releases/download/apk/Sunnah.apk';
 const isNative=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
 if(isNative)document.documentElement.classList.add('native');
 const $=id=>document.getElementById(id);
@@ -782,7 +789,7 @@ function toggleMenu(e){e.stopPropagation();$('accMenu').classList.remove('show')
 function toggleAccMenu(e){e.stopPropagation();$('menu').classList.remove('show');$('accMenu').classList.toggle('show');}
 function closeMenu(){$('menu').classList.remove('show');$('accMenu').classList.remove('show');}
 document.addEventListener('click',e=>{if(!e.target.closest('.menu'))closeMenu();});
-function openSettings(){closeMenu();$('rateInput').value=db.rate;$('hideBalInput').checked=db.hideBal!==false;renderSync();$('setModal').classList.add('show');}
+function openSettings(){closeMenu();$('rateInput').value=db.rate;$('hideBalInput').checked=db.hideBal!==false;renderSync();renderUpdate();$('setModal').classList.add('show');}
 function saveRate(){const r=parseFloat($('rateInput').value);if(isNaN(r)||r<0)return toast('Invalid rate');db.rate=r;db.setUpd=Date.now();save();render();toast('Rate saved');}
 async function exportData(){
   closeMenu();
@@ -832,6 +839,7 @@ $('accSearch').oninput=renderAccounts;
 function fitMobile(){const w=window.innerWidth,z=w<768?Math.min(1.6,Math.max(1,w/410)):1;const r=document.documentElement;r.style.zoom=z;r.style.setProperty("--vh",(window.innerHeight/z/100)+"px");}
 fitMobile();window.addEventListener("resize",fitMobile);
 load();render();initSync();if(db.pin&&db.pin.hash)lockApp();
+setTimeout(checkUpdate,1500);
 
 /* ---------- online sync (Firebase) ---------- */
 // Whole data set lives in one Firestore document: users/{uid} {data: JSON}.
@@ -1000,6 +1008,40 @@ async function forgotPin(){
   }
 }
 
+/* ---------- update notice ---------- */
+// Android: compare this build with the latest GitHub release "apk" (title ends with "(build N)").
+// Web: the service worker reports a new version.
+let updInfo=null,lastUpdCheck=0,webUpdate=false;
+async function checkUpdate(manual){
+  lastUpdCheck=Date.now();
+  if(!isNative){if(manual){navigator.serviceWorker&&navigator.serviceWorker.getRegistration().then(r=>r&&r.update());toast(webUpdate?'Update available':'You have the latest version');}return;}
+  try{
+    const r=await fetch('https://api.github.com/repos/'+REPO+'/releases/tags/apk',{cache:'no-store',headers:{Accept:'application/vnd.github+json'}});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const j=await r.json(),m=/build\s*(\d+)/i.exec(j.name||'');
+    const latest=m?+m[1]:0;
+    updInfo=latest>APP_BUILD?{build:latest,date:(j.published_at||'').slice(0,10)}:null;
+    renderUpdate();
+    if(manual)toast(updInfo?'Update available':'You have the latest version');
+  }catch(e){if(manual)toast('Could not check for updates');}
+}
+function renderUpdate(){
+  const show=updInfo||webUpdate;
+  $('updBar').innerHTML=show?`<div class="upd-bar"><span>⬆️ <b>Update available</b>${updInfo?' · build '+updInfo.build:''}</span><button class="btn btn-p btn-sm" onclick="installUpdate()">${isNative?'Update':'Reload'}</button></div>`:'';
+  const vb=$('verBox');if(vb)vb.innerHTML=`<div class="sync-st">${isNative?'Build '+(APP_BUILD||'dev'):'Web version'}${show?' · <span class="ok" style="color:var(--blue)">update available</span>':''}</div>
+    <button class="btn btn-o btn-sm" onclick="${show?'installUpdate()':'checkUpdate(true)'}">${show?(isNative?'Update now':'Reload'):'Check for updates'}</button>`;
+}
+function installUpdate(){
+  if(!isNative)return location.reload();
+  if(!confirm('Download the new version?\nWhen the download finishes, tap it and choose Install. Your data stays.'))return;
+  location.href=APK_URL; // opens in the phone's browser, which downloads the APK
+}
+if(!isNative&&'serviceWorker' in navigator&&location.protocol!=='file:'){
+  let hadCtrl=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{if(hadCtrl){webUpdate=true;renderUpdate();}hadCtrl=true;});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)navigator.serviceWorker.getRegistration().then(r=>r&&r.update()).catch(()=>{});});
+}
+
 /* ---------- installable app (PWA) ---------- */
 let deferredPrompt=null;
 const isStandalone=()=>window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
@@ -1032,7 +1074,7 @@ if(isNative){
     A.minimizeApp?A.minimizeApp():A.exitApp();
   });
   A&&A.addListener('pause',()=>{hideBal();awayAt=Date.now();});
-  A&&A.addListener('resume',()=>{if(awayAt&&Date.now()-awayAt>LOCK_AFTER)lockApp();});
+  A&&A.addListener('resume',()=>{if(awayAt&&Date.now()-awayAt>LOCK_AFTER)lockApp();if(Date.now()-lastUpdCheck>3*3600e3)checkUpdate();});
 }
 </script>
 </body>
