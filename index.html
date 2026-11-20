@@ -291,6 +291,15 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 .seg button{flex:1;white-space:nowrap;border:0;background:transparent;padding:10px 6px;border-radius:8px;font-weight:600;font-size:14px;color:var(--muted);cursor:pointer}
 .seg button.on{background:#fff;color:var(--purple);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .tx-a.neu{color:var(--blue)}
+#tMethodWrap .seg{display:grid;grid-template-columns:1fr 1fr}
+@media(min-width:600px){#tMethodWrap .seg{grid-template-columns:repeat(4,1fr)}}
+.pf-hero{background:linear-gradient(160deg,#1c7c3b,#0f4d24)}
+.pf-tbl{width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums}
+.pf-tbl th{background:#f6f7f9;color:var(--muted);font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:9px 14px;text-align:left}
+.pf-tbl td{padding:11px 14px;border-top:1px solid #eef0f4}
+.pf-tbl .n{text-align:right;white-space:nowrap}.pf-tbl td.n{font-weight:600}
+.pf-tbl tr.yr td{background:#f3f6fb;font-weight:700;color:var(--navy)}
+.pf-tbl tfoot td{border-top:2px solid var(--navy);font-weight:700;color:var(--navy);background:#e9eff8}
 .cv-stage.drag .vc{transition:none}
 /* balance reveal / hide */
 @keyframes balIn{from{opacity:0}to{opacity:1}}
@@ -371,6 +380,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
   <button data-tab="accounts" class="active">Accounts</button>
   <button data-tab="sunnah">Sunnah</button>
   <button data-tab="history">History</button>
+  <button data-tab="profit">Profit</button>
   <hr>
   <button class="sbtn" onclick="closeSide();openPending()">Pending Incentive <span class="sbadge" id="sbadge"></span></button>
   <button class="sbtn" onclick="closeSide();openSettings()">Settings</button>
@@ -402,7 +412,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
       <div class="hero cash">
         <div class="n">Sunnah</div>
         <div class="big" id="sBalS">0</div><div class="lb">Sunnah Balance</div>
-        <div class="sub2"><div>Received<b id="sGot">0</b></div><div>Paid<b id="sPaid">0</b></div></div>
+        <div class="sub2"><div>Received<b id="sGot">0</b></div><div>Paid<b id="sPaid">0</b></div><div>My Cross<b id="sCross">0</b></div></div>
       </div>
       <div class="row">
         <button class="btn btn-pu" style="flex:1" id="payBtn" onclick="togglePay()">Pay Sunnah</button>
@@ -417,12 +427,28 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
       <div id="cLedger"></div>
     </div></div></div>
 
+    <div id="tab-profit" style="display:none"><div class="split"><div>
+      <div class="hero pf-hero">
+        <div class="n">My Profit</div>
+        <div class="big" id="pfTotal">0</div><div class="lb">Total My Cross</div>
+        <div class="sub2"><div>This month<b id="pfMonth">0</b></div><div>This year<b id="pfYear">0</b></div><div>Entries<b id="pfCount">0</b></div></div>
+      </div>
+      <div class="ledger"><div class="lg-title">Monthly</div><div id="pfMonthly"></div></div>
+      <div class="ledger"><div class="lg-title">Yearly</div><div id="pfYearly"></div></div>
+      </div><div>
+      <div class="row stmt-period">
+        <input type="date" id="pFrom" style="flex:1;min-width:130px">
+        <input type="date" id="pTo" style="flex:1;min-width:130px">
+      </div>
+      <div id="pfStmt"></div>
+    </div></div></div>
+
     <div id="tab-history" style="display:none">
       <div class="row">
         <input type="date" id="hFrom" style="flex:1;min-width:130px">
         <input type="date" id="hTo" style="flex:1;min-width:130px">
         <select id="hType" style="flex:1;min-width:130px">
-          <option value="">All types</option><option value="credit">Remittance In</option><option value="receive">Fund Receive</option><option value="inc">Incentive Received</option><option value="withdraw">Cash Withdrawal</option><option value="move">Account to Account</option><option value="pay">Paid to Sunnah</option><option value="cashin">Added to Sunnah</option>
+          <option value="">All types</option><option value="credit">Remittance In</option><option value="receive">Fund Receive</option><option value="inc">Incentive Received</option><option value="withdraw">Cash Withdrawal</option><option value="move">Account to Account</option><option value="pay">Paid to Sunnah</option><option value="cross">My Cross</option><option value="cashin">Added to Sunnah</option>
         </select>
       </div>
       <div class="cards">
@@ -501,7 +527,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
   <div class="f" id="tPendWrap"><label class="chk"><input type="checkbox" id="tPend" onchange="txnHint()"> Incentive not received yet (pending)</label></div>
   <div class="hint" id="tHint" style="margin:-4px 0 10px"></div>
   <div class="f" id="tMethodWrap"><label>Pay by</label>
-    <div class="seg"><button type="button" data-m="cash" onclick="setMethod('cash')">Cash</button><button type="button" data-m="bank" onclick="setMethod('bank')">Bank</button><button type="button" data-m="mobile" onclick="setMethod('mobile')">Mobile Banking</button></div></div>
+    <div class="seg"><button type="button" data-m="cash" onclick="setMethod('cash')">Cash</button><button type="button" data-m="bank" onclick="setMethod('bank')">Bank</button><button type="button" data-m="mobile" onclick="setMethod('mobile')">Mobile Banking</button><button type="button" data-m="cross" onclick="setMethod('cross')">My Cross</button></div></div>
   <div id="tBankWrap">
     <div class="f"><label>Account Holder *</label><input id="pHolder" autocomplete="off"></div>
     <div class="f"><label>Account Number *</label><input id="pBankAcc" inputmode="numeric" autocomplete="off"></div>
@@ -659,10 +685,11 @@ function accStats(id){
 // Account-only entries (withdrawal, account-to-account) don't touch it.
 const SUN_DELTA={credit:1,receive:1,inc:1,cashin:1,pay:-1,transfer:-1};
 const evAmt=e=>e.k==='inc'?incOf(e.t):e.t.amount;
+const isCross=t=>t.type==='pay'&&t.method==='cross';
 function sunStats(){
-  let bal=0,got=0,paid=0;
-  allEvents().forEach(e=>{const d=SUN_DELTA[e.k];if(!d)return;const a=evAmt(e);bal+=a*d;if(d>0)got+=a;else paid+=a;});
-  return {bal,got,paid};
+  let bal=0,got=0,paid=0,cross=0;
+  allEvents().forEach(e=>{const d=SUN_DELTA[e.k];if(!d)return;const a=evAmt(e);bal+=a*d;if(d>0)got+=a;else if(isCross(e.t))cross+=a;else paid+=a;});
+  return {bal,got,paid,cross};
 }
 const pendingList=()=>db.txns.filter(t=>t.type==='credit'&&t.incStatus==='pending').sort(byTime);
 // every posted event (incentive becomes its own event on the day it was received)
@@ -738,7 +765,7 @@ function render(){
   const b=$('badge');b.textContent=pl.length>99?'99+':pl.length;b.classList.toggle('on',pl.length>0);
   const sb=$('sbadge');sb.textContent=b.textContent;sb.classList.toggle('on',pl.length>0);
   $('pendBar').innerHTML=pl.length?`<div class="pend-bar" onclick="openPending()"><span><b>${pl.length}</b> incentive${pl.length>1?'s':''} pending · <b>${tk(pAmt)}</b></span><span class="blue">View ›</span></div>`:'';
-  renderAccounts();renderSunnah();renderHistory();
+  renderAccounts();renderSunnah();renderHistory();renderProfit();
   if(curAcc)renderStatement();
   if($('pendModal').classList.contains('show'))renderPending();
 }
@@ -825,25 +852,44 @@ function evRow(e,withAcc){
     case 'withdraw':return {amt:-a,title:'Cash withdrawal',sub:subJoin(acc,esc(t.note))};
     case 'transfer':return {amt:-a,title:'Paid to Sunnah',sub:subJoin('Fund Transfer',acc,esc(t.note))};
     case 'move':return {amt:0,amtTxt:tk(a),cls:'neu',title:'Account to account transfer',sub:subJoin(''+esc(accName(t.accId))+' → '+esc(accName(t.toAcc)),esc(t.note))};
-    case 'pay':return {amt:-a,title:'Paid to Sunnah'+(t.method==='bank'||t.method==='transfer'?' by Bank':t.method==='mobile'?' by '+esc(t.payTo&&t.payTo.op||'Mobile Banking'):' in Cash'),sub:paySub(t)};
+    case 'pay':if(t.method==='cross')return {amt:-a,title:'My Cross',sub:esc(t.note)};
+      return {amt:-a,title:'Paid to Sunnah'+(t.method==='bank'||t.method==='transfer'?' by Bank':t.method==='mobile'?' by '+esc(t.payTo&&t.payTo.op||'Mobile Banking'):' in Cash'),sub:paySub(t)};
     case 'cashin':return {amt:a,title:'Added to Sunnah',sub:esc(t.note)};
   }
 }
 function renderSunnah(){
   const ss=sunStats();
-  $('sBalS').textContent=tk(ss.bal);$('sGot').textContent=tk(ss.got);$('sPaid').textContent=tk(ss.paid);
+  $('sBalS').textContent=tk(ss.bal);$('sGot').textContent=tk(ss.got);$('sPaid').textContent=tk(ss.paid);$('sCross').textContent=tk(ss.cross);
   const rows=[];
   allEvents().forEach(e=>{const d=SUN_DELTA[e.k];if(!d)return;const r=evRow(e,true);rows.push({date:e.date,title:r.title,sub:r.sub,amt:evAmt(e)*d});});
   $('cLedger').innerHTML=stmtHTML({doc:'Statement of Sunnah Balance',name:'Sunnah',meta:[['Party','Sunnah'],['Type','Payable balance']],rows,opening:0,from:$('cFrom').value,to:$('cTo').value});
+}
+
+/* ---------- profit (My Cross) ---------- */
+function renderProfit(){
+  const L=db.txns.filter(isCross).sort(byTime),now=today(),ym=now.slice(0,7),yy=now.slice(0,4);
+  let tot=0,mon=0,yr=0;const byM={},byY={};
+  L.forEach(t=>{tot+=t.amount;if(t.date.slice(0,7)===ym)mon+=t.amount;if(t.date.slice(0,4)===yy)yr+=t.amount;
+    const m=t.date.slice(0,7),y=t.date.slice(0,4);(byM[m]=byM[m]||{a:0,n:0}).a+=t.amount;byM[m].n++;(byY[y]=byY[y]||{a:0,n:0}).a+=t.amount;byY[y].n++;});
+  $('pfTotal').textContent=tk(tot);$('pfMonth').textContent=tk(mon);$('pfYear').textContent=tk(yr);$('pfCount').textContent=L.length;
+  const months=Object.keys(byM).sort().reverse();let lastY=null,mh='';
+  months.forEach(m=>{const y=m.slice(0,4);if(y!==lastY){mh+=`<tr class="yr"><td colspan="2">${y}</td><td class="n">${fmtN(byY[y].a)}</td></tr>`;lastY=y;}
+    mh+=`<tr><td>${MON[+m.slice(5)-1]} ${y}</td><td class="muted">${byM[m].n} entr${byM[m].n===1?'y':'ies'}</td><td class="n">${fmtN(byM[m].a)}</td></tr>`;});
+  $('pfMonthly').innerHTML=months.length?`<table class="pf-tbl"><thead><tr><th>Month</th><th>Entries</th><th class="n">Amount</th></tr></thead><tbody>${mh}</tbody></table>`:'<div class="st-empty">No profit yet</div>';
+  const years=Object.keys(byY).sort().reverse();
+  $('pfYearly').innerHTML=years.length?`<table class="pf-tbl"><thead><tr><th>Year</th><th>Entries</th><th class="n">Amount</th></tr></thead><tbody>${years.map(y=>`<tr><td>${y}</td><td class="muted">${byY[y].n}</td><td class="n">${fmtN(byY[y].a)}</td></tr>`).join('')}</tbody><tfoot><tr><td colspan="2">Total</td><td class="n">${fmtN(tot)}</td></tr></tfoot></table>`:'<div class="st-empty">No profit yet</div>';
+  $('pfStmt').innerHTML=stmtHTML({doc:'Profit Statement',name:'My Cross',meta:[['Source','Sunnah'],['Type','Profit']],
+    rows:L.map(t=>({date:t.date,title:'My Cross',sub:esc(t.note),amt:t.amount})),opening:0,from:$('pFrom').value,to:$('pTo').value});
 }
 
 function renderHistory(){
   const f=$('hFrom').value,to=$('hTo').value,ty=$('hType').value;
   let c=0,r=0,i=0,w=0,p=0;const rows=[];
   allEvents().forEach(e=>{
-    if((f&&e.date<f)||(to&&e.date>to)||(ty&&e.k!==ty&&!(ty==='pay'&&e.k==='transfer')))return;
+    const kk=isCross(e.t)?'cross':e.k;
+    if((f&&e.date<f)||(to&&e.date>to)||(ty&&kk!==ty&&!(ty==='pay'&&kk==='transfer')))return;
     const a=evAmt(e);
-    if(e.k==='credit')c+=a;else if(e.k==='receive')r+=a;else if(e.k==='inc')i+=a;else if(e.k==='withdraw')w+=a;else if(e.k==='pay'||e.k==='transfer')p+=a;
+    if(e.k==='credit')c+=a;else if(e.k==='receive')r+=a;else if(e.k==='inc')i+=a;else if(e.k==='withdraw')w+=a;else if((e.k==='pay'&&!isCross(e.t))||e.k==='transfer')p+=a;
     const row=evRow(e,true);row.date=e.date;rows.push(row);
   });
   $('hC').textContent=tk(c);$('hR').textContent=tk(r);$('hI').textContent=tk(i);$('hW').textContent=tk(w);$('hP').textContent=tk(p);
@@ -1041,7 +1087,7 @@ function saveTxn(){
   }
   if(!confirm('Save this entry? It cannot be deleted later.'))return;
   db.txns.push(t);save();closeTxn();render();
-  toast(t.type==='move'?'Transferred to '+accName(t.toAcc):{credit:t.incStatus==='pending'?'Remittance added · incentive pending':'Remittance + incentive added',receive:'Fund received',withdraw:'Cash withdrawn',pay:'Paid to Sunnah',cashin:'Added to Sunnah'}[txnType]);
+  toast(t.type==='move'?'Transferred to '+accName(t.toAcc):{credit:t.incStatus==='pending'?'Remittance added · incentive pending':'Remittance + incentive added',receive:'Fund received',withdraw:'Cash withdrawn',pay:payMethod==='cross'?'My Cross saved':'Paid to Sunnah',cashin:'Added to Sunnah'}[txnType]);
 }
 
 /* ---------- tap to show balance ---------- */
@@ -1105,8 +1151,8 @@ document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>
 function switchTab(t){
   unmountInline();
   document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
-  ['accounts','sunnah','history'].forEach(x=>$('tab-'+x).style.display=x===t?'block':'none');
-  $('pageTitle').textContent={accounts:'Accounts',sunnah:'Sunnah',history:'History'}[t];
+  ['accounts','sunnah','history','profit'].forEach(x=>$('tab-'+x).style.display=x===t?'block':'none');
+  $('pageTitle').textContent={accounts:'Accounts',sunnah:'Sunnah',history:'History',profit:'Profit'}[t];
 }
 function openSide(){closeMenu();$('side').classList.add('open');$('sideBg').classList.add('show');}
 function closeSide(){$('side').classList.remove('open');$('sideBg').classList.remove('show');}
@@ -1118,11 +1164,12 @@ $('accSearch').oninput=renderAccounts;
 ['hFrom','hTo','hType'].forEach(id=>$(id).onchange=renderHistory);
 ['cFrom','cTo'].forEach(id=>$(id).onchange=renderSunnah);
 ['sFrom','sTo'].forEach(id=>$(id).onchange=renderStatement);
+['pFrom','pTo'].forEach(id=>$(id).onchange=renderProfit);
 
 /* scale up on phones so the app looks like a normal-size mobile app */
 function fitMobile(){const w=window.innerWidth,z=w<768?Math.min(1.6,Math.max(1,w/410)):1;const r=document.documentElement;r.style.zoom=z;r.style.setProperty("--vh",(window.innerHeight/z/100)+"px");}
 fitMobile();window.addEventListener("resize",fitMobile);
-let lastNar=window.innerWidth<600;window.addEventListener('resize',()=>{const n=window.innerWidth<600;if(n!==lastNar){lastNar=n;renderSunnah();if(curAcc)renderStatement();}});
+let lastNar=window.innerWidth<600;window.addEventListener('resize',()=>{const n=window.innerWidth<600;if(n!==lastNar){lastNar=n;renderSunnah();renderProfit();if(curAcc)renderStatement();}});
 load();render();initSync();if(db.pin&&db.pin.hash)lockApp();
 setTimeout(checkUpdate,1500);
 
