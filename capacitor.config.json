@@ -1,6 +1,6 @@
 {
   "appId": "com.siam.remittancetracker",
-  "appName": "Remittance Tracker",
+  "appName": "Sunnah",
   "webDir": "www",
   "android": {
     "backgroundColor": "#0b3d75"

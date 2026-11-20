@@ -2,7 +2,7 @@
   "name": "remittance-tracker",
   "version": "1.0.0",
   "private": true,
-  "description": "Remittance Tracker - web app + Android app (Capacitor)",
+  "description": "Sunnah - web app + Android app (Capacitor)",
   "scripts": {
     "build:www": "node scripts/build-www.js"
   },

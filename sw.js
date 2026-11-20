@@ -1,5 +1,5 @@
-// Offline cache for Remittance Tracker. Bump VERSION when files change.
-const VERSION = 'rt-v2';
+// Offline cache for Sunnah. Bump VERSION when files change.
+const VERSION = 'rt-v3';
 const FILES = ['./', './index.html', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/maskable-512.png',
   './icons/apple-touch-icon.png', './icons/favicon-32.png'];

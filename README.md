@@ -1,4 +1,4 @@
-# Remittance Tracker
+# Sunnah
 
 Track remittances, incentives, cash in hand and party payments. Runs fully in the browser; data is stored on the device (use **Download Backup** regularly).
 
@@ -15,7 +15,7 @@ The app will be at `https://<user>.github.io/siam/`.
 ## Android app (APK)
 GitHub builds the APK automatically on every push (`.github/workflows/android-apk.yml`).
 
-**Download:** https://github.com/muhammadiafinance-sudo/siam/releases/download/apk/RemittanceTracker.apk
+**Download:** https://github.com/muhammadiafinance-sudo/siam/releases/download/apk/Sunnah.apk
 
 Open the file on your phone → allow "Install unknown apps" for your browser/Files app if asked → **Install**.
 New builds install over the old app and keep your data. Uninstalling the app deletes its data, so download a backup first.

@@ -11,8 +11,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Remittance">
-<title>Remittance Tracker</title>
+<meta name="apple-mobile-web-app-title" content="Sunnah">
+<title>Sunnah</title>
 <style>
 :root{
   --bg:#f3f4f6;--card:#fff;--text:#1a1d21;--muted:#6e7378;--line:#e5e7eb;
@@ -192,10 +192,9 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 <header>
   <div class="hl">
     <button class="icon-btn burger" title="Menu" onclick="openSide()">☰</button>
-    <div><h1>💸 Remittance Tracker</h1><p>Account → Cash → Party</p></div>
+    <div><h1>💸 Sunnah</h1><p>Account → Cash → Party</p></div>
   </div>
   <div class="hr">
-    <button class="icon-btn" id="eyeBtn" title="Show / hide balance" onclick="toggleBal()">👁</button>
     <button class="icon-btn" title="Pending incentives" onclick="openPending()">🔔<span class="badge" id="badge"></span></button>
     <button class="icon-btn" title="Menu" onclick="toggleMenu(event)">⋮</button>
     <div class="menu" id="menu">
@@ -470,7 +469,7 @@ const subJoin=(...p)=>p.filter(Boolean).join(' · ');
 function render(){
   let B=0,I=0;db.accounts.forEach(a=>{const s=accStats(a.id);B+=s.bal;I+=s.iR;});
   const cs=cashStats(),pl=pendingList(),pAmt=pl.reduce((s,t)=>s+incOf(t),0);
-  $('tBal').textContent=balTxt(B);$('tCash').textContent=balTxt(cs.bal);$('eyeBtn').textContent=balHidden()?'👁':'🙈';$('eyeBtn').style.display=db.hideBal===false?'none':'';$('tInc').textContent=tk(I);$('tPaid').textContent=tk(cs.out);
+  $('tBal').textContent=balTxt(B);$('tCash').textContent=balTxt(cs.bal);$('tInc').textContent=tk(I);$('tPaid').textContent=tk(cs.out);
   const b=$('badge');b.textContent=pl.length>99?'99+':pl.length;b.classList.toggle('on',pl.length>0);
   const sb=$('sbadge');sb.textContent=b.textContent;sb.classList.toggle('on',pl.length>0);
   $('pendBar').innerHTML=pl.length?`<div class="pend-bar" onclick="openPending()"><span>⏳ <b>${pl.length}</b> incentive${pl.length>1?'s':''} pending · <b>${tk(pAmt)}</b></span><span class="blue">View ›</span></div>`:'';
