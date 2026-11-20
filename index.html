@@ -110,7 +110,7 @@ input[type=checkbox]{width:20px;height:20px;flex:none}
 .pi .a{font-weight:700;color:var(--blue)}
 .pi .d{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.4}
 .pi .amt{font-weight:700;color:var(--gold);font-size:16px;text-align:right}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1d21;color:#fff;padding:10px 18px;border-radius:20px;font-size:14px;opacity:0;transition:.3s;z-index:99;pointer-events:none}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1a1d21;color:#fff;padding:10px 18px;border-radius:20px;font-size:14px;opacity:0;transition:.3s;z-index:300;pointer-events:none}
 .toast.show{opacity:1}
 .box{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
 .box .st{font-weight:700;margin-bottom:8px}
@@ -203,6 +203,15 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 .lk-pad button{width:72px;height:72px;border-radius:50%;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:28px;cursor:pointer}
 .lk-pad button:active{background:rgba(255,255,255,.3)}
 .lk-pad .lk-sm{font-size:14px;background:transparent;font-weight:600}
+.auth-scr{z-index:210;justify-content:flex-start;padding-top:calc(18vh + var(--safe-area-inset-top,env(safe-area-inset-top)))}
+.auth-form{display:none;flex-direction:column;gap:12px;width:100%;max-width:340px}
+.auth-scr.ready .auth-form{display:flex}.auth-scr.ready #authLoading{display:none}
+.auth-form input{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;padding:14px;font-size:16px;border-radius:10px}
+.auth-form input::placeholder{color:rgba(255,255,255,.65)}
+.auth-main{background:#fff;color:var(--navy);padding:14px;font-size:16px;margin-top:6px}
+.auth-alt{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5);padding:13px;font-size:15px}
+.auth-form .auth-link{color:#cfe3ff;align-self:center}
+.btn:disabled{opacity:.5}
 @media print{.lock-scr{display:none!important}}
 #syncBox .f{margin-bottom:8px}
 .sync-st{font-size:14px;margin-bottom:10px;line-height:1.5}
@@ -411,6 +420,17 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
   <div class="mbtns"><button class="btn btn-p" onclick="closeModal('iosModal')">OK</button></div>
 </div></div>
 
+<div id="auth" class="lock-scr auth-scr">
+  <div class="lk-title">Sunnah</div>
+  <div id="authLoading" class="lk-msg">Loading…</div>
+  <form id="authForm" class="auth-form" onsubmit="event.preventDefault();syncLogin(false)">
+    <input type="email" id="syEmail" placeholder="Email" autocomplete="email" autocapitalize="off">
+    <input type="password" id="syPass" placeholder="Password" autocomplete="current-password">
+    <button type="submit" class="btn auth-main">Sign in</button>
+    <button type="button" class="btn auth-alt" onclick="syncLogin(true)">Create account</button>
+    <button type="button" class="linkbtn auth-link" onclick="syncReset()">Forgot password?</button>
+  </form>
+</div>
 <div id="lock" class="lock-scr">
   <div class="lk-title">Sunnah</div>
   <div class="lk-msg" id="lkMsg">Enter PIN</div>
@@ -435,7 +455,7 @@ if(isNative)document.documentElement.classList.add('native');
 const $=id=>document.getElementById(id);
 let db={accounts:[],txns:[],rate:2.5,openCash:0,version:4};
 let curAcc=null,txnType='credit',editingAcc=null,rcvId=null;
-const LOCK_AFTER=30000;let awayAt=0,pinBuf='',pinMode='unlock',pinFirst='',pinFails=0,pinWaitUntil=0,pinDone=null;
+const LOCK_AFTER=30000;let manualLogin=false,awayAt=0,pinBuf='',pinMode='unlock',pinFirst='',pinFails=0,pinWaitUntil=0,pinDone=null;
 let fbAuth=null,fbFs=null,fbUser=null,fbUnsub=null,pushTimer=null,lastRemote=null,syncState='off',syncErr='',lastSync=null;
 
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
@@ -801,7 +821,7 @@ function switchTab(t){
 function openSide(){closeMenu();$('side').classList.add('open');$('sideBg').classList.add('show');}
 function closeSide(){$('side').classList.remove('open');$('sideBg').classList.remove('show');}
 document.addEventListener('keydown',e=>{
-  if($('lock').classList.contains('show')){if(/^[0-9]$/.test(e.key))pinKey(+e.key);else if(e.key==='Backspace')pinKey(-1);e.preventDefault();return;}
+  if($('lock').classList.contains('show')&&!$('auth').classList.contains('show')){if(/^[0-9]$/.test(e.key))pinKey(+e.key);else if(e.key==='Backspace')pinKey(-1);e.preventDefault();return;}
   if(e.key==='Escape')closeSide();});
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{closeSide();if(curAcc)goHome();switchTab(b.dataset.tab);renderHistory();window.scrollTo(0,0);});
 $('accSearch').oninput=renderAccounts;
@@ -838,13 +858,15 @@ const syncJSON=x=>JSON.stringify(mergeDb(x,x));   // canonical form (excludes pe
 function syncRef(){return FB.doc(fbFs,'users',fbUser.uid);}
 function initSync(){
   if(!window.FIREBASE_CONFIG||!window.FB){syncState='off';return;}
+  $('auth').classList.add('show');setTimeout(()=>$('auth').classList.add('ready'),8000);
   try{
     const app=FB.initializeApp(window.FIREBASE_CONFIG);fbAuth=FB.getAuth(app);fbFs=FB.getFirestore(app);
     FB.setPersistence(fbAuth,FB.browserLocalPersistence).catch(()=>{});
     FB.onAuthStateChanged(fbAuth,u=>{
       if(fbUnsub){fbUnsub();fbUnsub=null;}
       fbUser=u;lastRemote=null;syncState=u?'syncing':'out';renderSync();
-      if(u)startSync();
+      showAuthGate(!u);
+      if(u){if(manualLogin)hideLock();manualLogin=false;startSync();}
     });
   }catch(e){syncState='error';syncErr=e.message;}
 }
@@ -871,10 +893,7 @@ function pushNow(){
 function renderSync(){
   const box=$('syncBox');if(!box)return;renderPinBox();
   if(!fbAuth){box.innerHTML='<div class="sync-st muted">'+(syncState==='error'?'⚠ '+esc(syncErr):'Not set up')+'</div>';return;}
-  if(!fbUser){box.innerHTML=`<div class="f"><input type="email" id="syEmail" placeholder="Email" autocomplete="email"></div>
-    <div class="f"><input type="password" id="syPass" placeholder="Password" autocomplete="current-password"></div>
-    <div class="row" style="margin:0"><button class="btn btn-p" style="flex:1" onclick="syncLogin(false)">Sign in</button><button class="btn btn-o" style="flex:1" onclick="syncLogin(true)">Create account</button></div>
-    <button class="linkbtn" onclick="syncReset()">Forgot password?</button>`;return;}
+  if(!fbUser){box.innerHTML='<div class="sync-st muted">Not signed in</div>';return;}
   const st=syncState==='ok'?`<span class="ok">✓ Synced</span>${lastSync?' · '+lastSync.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):''}`:
     syncState==='error'?`<span class="err">⚠ ${esc(syncErr)}</span>`:'Syncing…';
   box.innerHTML=`<div class="sync-st">${esc(fbUser.email)}<br>${st}</div><button class="btn btn-o btn-sm" onclick="syncLogout()">Sign out</button>`;
@@ -883,21 +902,28 @@ function renderSync(){
 const authMsg=e=>({'auth/invalid-credential':'Wrong email or password','auth/wrong-password':'Wrong email or password','auth/user-not-found':'No account with this email',
   'auth/email-already-in-use':'This email already has an account','auth/weak-password':'Password must be at least 6 characters','auth/invalid-email':'Invalid email',
   'auth/network-request-failed':'No internet connection'}[e.code]||e.message);
+function showAuthGate(on){
+  const g=$('auth');g.classList.add('ready');g.classList.toggle('show',on);
+  if(on){closeSide();closeMenu();document.querySelectorAll('.modal-bg.show').forEach(m=>m.classList.remove('show'));
+    const b=[...g.querySelectorAll('button')];b.forEach(x=>x.disabled=false);$('syPass').value='';}
+}
 async function syncLogin(create){
   const em=$('syEmail').value.trim(),pw=$('syPass').value;if(!em||!pw)return toast('Enter email and password');
-  const btns=[...document.querySelectorAll('#syncBox button')];btns.forEach(b=>b.disabled=true);toast(create?'Creating account…':'Signing in…');
+  manualLogin=true;const btns=[...document.querySelectorAll('#auth button')];btns.forEach(b=>b.disabled=true);toast(create?'Creating account…':'Signing in…');
   try{
     await Promise.race([(create?FB.createUserWithEmailAndPassword:FB.signInWithEmailAndPassword)(fbAuth,em,pw),
       new Promise((_,rej)=>setTimeout(()=>rej({code:'timeout',message:'No response from server. Check internet and try again.'}),25000))]);
     toast(create?'Account created · syncing':'Signed in · syncing');
-  }catch(e){toast(authMsg(e));btns.forEach(b=>b.disabled=false);}
+  }catch(e){manualLogin=false;toast(authMsg(e));btns.forEach(b=>b.disabled=false);}
 }
 async function syncReset(){
   const em=$('syEmail').value.trim();if(!em)return toast('Enter your email first');
   try{await FB.sendPasswordResetEmail(fbAuth,em);toast('Password reset email sent');}catch(e){toast(authMsg(e));}
 }
 async function syncLogout(){
-  const wipe=confirm('Sign out. Also remove the data from this device?\n(It stays safe online.)');
+  if(!confirm('Sign out?'))return;
+  const wipe=confirm('Also remove the data from this device?\n(It stays safe online.)');
+  closeModal('setModal');
   if(fbUnsub){fbUnsub();fbUnsub=null;}clearTimeout(pushTimer);
   await FB.signOut(fbAuth);
   if(wipe){db={accounts:[],txns:[],rate:db.rate,openCash:0,version:4,hideBal:db.hideBal};saveLocal();goHome();}
@@ -996,7 +1022,7 @@ if(isNative){
   $('importFile').removeAttribute('accept'); // Android file picker doesn't understand ".json"
   const A=Capacitor.Plugins.App;
   if(A)A.addListener('backButton',()=>{
-    if($('lock').classList.contains('show'))return A.minimizeApp?A.minimizeApp():A.exitApp();
+    if($('lock').classList.contains('show')||$('auth').classList.contains('show'))return A.minimizeApp?A.minimizeApp():A.exitApp();
     const open=[...document.querySelectorAll('.modal-bg.show')];
     if(open.length)return open.forEach(m=>m.classList.remove('show'));
     if($('side').classList.contains('open'))return closeSide();
