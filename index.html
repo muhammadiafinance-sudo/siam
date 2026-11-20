@@ -173,6 +173,8 @@ input[type=checkbox]{width:20px;height:20px;flex:none}
 header{padding-top:calc(12px + env(safe-area-inset-top));padding-left:calc(16px + env(safe-area-inset-left));padding-right:calc(16px + env(safe-area-inset-right))}
 .wrap{padding-bottom:calc(40px + env(safe-area-inset-bottom))}
 .side-head{padding-top:calc(16px + env(safe-area-inset-top))}
+.tapbal{cursor:pointer;user-select:none;-webkit-user-select:none}
+.masked{letter-spacing:1px;opacity:.9}
 .ios-steps{font-size:14px;line-height:1.7}
 @media print{header .hr,.tabs,.row,.back,.modal-bg,.pend-bar,.side,.bnav{display:none!important}body{background:#fff}.split{display:block!important}}
 </style>
@@ -184,6 +186,7 @@ header{padding-top:calc(12px + env(safe-area-inset-top));padding-left:calc(16px 
     <div><h1>💸 Remittance Tracker</h1><p>Account → Cash → Party</p></div>
   </div>
   <div class="hr">
+    <button class="icon-btn" id="eyeBtn" title="Show / hide balance" onclick="toggleBal()">👁</button>
     <button class="icon-btn" title="Pending incentives" onclick="openPending()">🔔<span class="badge" id="badge"></span></button>
     <button class="icon-btn" title="Menu" onclick="toggleMenu(event)">⋮</button>
     <div class="menu" id="menu">
@@ -220,8 +223,8 @@ header{padding-top:calc(12px + env(safe-area-inset-top));padding-left:calc(16px 
   <div id="home">
     <div id="pendBar"></div>
     <div class="cards">
-      <div class="card"><div class="lbl">Balance in Accounts</div><div class="val blue" id="tBal">0</div></div>
-      <div class="card"><div class="lbl">💵 Cash in Hand</div><div class="val purple" id="tCash">0</div></div>
+      <div class="card tapbal"><div class="lbl">Balance in Accounts</div><div class="val blue" id="tBal">0</div></div>
+      <div class="card tapbal"><div class="lbl">💵 Cash in Hand</div><div class="val purple" id="tCash">0</div></div>
       <div class="card"><div class="lbl">Incentive Received</div><div class="val green" id="tInc">0</div></div>
       <div class="card"><div class="lbl">Given to Parties</div><div class="val red" id="tPaid">0</div></div>
     </div>
@@ -240,7 +243,7 @@ header{padding-top:calc(12px + env(safe-area-inset-top));padding-left:calc(16px 
       <div class="hero cash">
         <div class="t">Cash Wallet</div>
         <div class="n">💵 Cash in Hand</div>
-        <div class="big" id="cBal">0</div><div class="lb">Available cash</div>
+        <div class="big tapbal" id="cBal">0</div><div class="lb">Available cash</div>
         <div class="sub2"><div>Cash in<b id="cIn">0</b></div><div>Paid out<b id="cOut">0</b></div><div>Payments<b id="cCount">0</b></div></div>
       </div>
       <div class="row"><button class="btn btn-pu" style="flex:1" onclick="openPay()">− Pay Cash to Party</button></div>
@@ -284,7 +287,7 @@ header{padding-top:calc(12px + env(safe-area-inset-top));padding-left:calc(16px 
     <div class="hero">
       <div class="n" id="sName"></div>
       <div class="t" id="sMeta"></div>
-      <div class="big" id="sBal">0</div><div class="lb">Available balance</div>
+      <div class="big tapbal" id="sBal">0</div><div class="lb">Available balance</div>
       <div class="sub2">
         <div>Remittance<b id="sC">0</b></div>
         <div>Incentive received<b id="sI">0</b></div>
@@ -355,6 +358,8 @@ header{padding-top:calc(12px + env(safe-area-inset-top));padding-left:calc(16px 
   <h3><span>⚙️ Settings</span><button class="x" onclick="closeModal('setModal')">×</button></h3>
   <div class="box"><div class="st">Incentive Rate (%)</div><p>Applies to new remittance entries only.</p>
     <div class="row" style="margin:0"><input type="number" step="0.01" id="rateInput" style="flex:1"><button class="btn btn-p" onclick="saveRate()">Save</button></div></div>
+  <div class="box"><div class="st">Balance Privacy</div><p>Hide balances until you tap them. They hide again after 10 seconds.</p>
+    <label class="chk" style="background:#f6f7f9;border-color:var(--line);color:var(--text)"><input type="checkbox" id="hideBalInput" onchange="saveHideBal()"> Hide balances (tap to show)</label></div>
   <div class="box"><div class="st">Opening Cash</div><p>Cash you already had in hand before using this app.</p>
     <div class="row" style="margin:0"><input type="number" id="openCashInput" style="flex:1"><button class="btn btn-p" onclick="saveOpenCash()">Save</button></div></div>
   <div class="box"><div class="st red">Reset App</div><p>Erase everything and start fresh. Download a backup first.</p>
@@ -390,6 +395,10 @@ const accOf=id=>db.accounts.find(a=>a.id===id);
 const accName=id=>(accOf(id)||{name:'(deleted account)'}).name;
 const last4=n=>n?' (...'+String(n).slice(-4)+')':'';
 const incOf=t=>t.inc!=null?t.inc:r2(t.amount*db.rate/100);
+let balShown=false,balTimer=null;
+const balHidden=()=>db.hideBal!==false&&!balShown;
+const balTxt=n=>balHidden()?'৳ •••••':tk(n);
+const balHtml=n=>balHidden()?'<span class="masked">৳ •••••</span>':tk(n);
 const byTime=(a,b)=>a.date===b.date?(a.created||0)-(b.created||0):(a.date<b.date?-1:1);
 
 /* ---------- storage ---------- */
@@ -436,7 +445,7 @@ function ledgerHTML(rows,emptyMsg){
   rows.forEach(r=>{
     if(r.date!==last){html+=`<div class="lg-h">${fmtD(r.date)}</div>`;last=r.date;}
     html+=`<div class="tx ${r.cls||''}"><div><div class="tx-t">${r.title}</div>${r.sub?`<div class="tx-s">${r.sub}</div>`:''}</div>
-      <div class="tx-r"><div class="tx-a ${r.amt>0?'pos':''}">${r.amtTxt||sTk(r.amt)}</div>${r.bal!=null?`<div class="tx-b">${tk(r.bal)}</div>`:''}</div></div>`;
+      <div class="tx-r"><div class="tx-a ${r.amt>0?'pos':''}">${r.amtTxt||sTk(r.amt)}</div>${r.bal!=null?`<div class="tx-b tapbal">${balHtml(r.bal)}</div>`:''}</div></div>`;
   });
   return html;
 }
@@ -446,7 +455,7 @@ const subJoin=(...p)=>p.filter(Boolean).join(' · ');
 function render(){
   let B=0,I=0;db.accounts.forEach(a=>{const s=accStats(a.id);B+=s.bal;I+=s.iR;});
   const cs=cashStats(),pl=pendingList(),pAmt=pl.reduce((s,t)=>s+incOf(t),0);
-  $('tBal').textContent=tk(B);$('tCash').textContent=tk(cs.bal);$('tInc').textContent=tk(I);$('tPaid').textContent=tk(cs.out);
+  $('tBal').textContent=balTxt(B);$('tCash').textContent=balTxt(cs.bal);$('eyeBtn').textContent=balHidden()?'👁':'🙈';$('eyeBtn').style.display=db.hideBal===false?'none':'';$('tInc').textContent=tk(I);$('tPaid').textContent=tk(cs.out);
   const b=$('badge');b.textContent=pl.length>99?'99+':pl.length;b.classList.toggle('on',pl.length>0);
   const sb=$('sbadge');sb.textContent=b.textContent;sb.classList.toggle('on',pl.length>0);
   $('pendBar').innerHTML=pl.length?`<div class="pend-bar" onclick="openPending()"><span>⏳ <b>${pl.length}</b> incentive${pl.length>1?'s':''} pending · <b>${tk(pAmt)}</b></span><span class="blue">View ›</span></div>`:'';
@@ -464,14 +473,14 @@ function renderAccounts(){
   $('accList').innerHTML=list.map(a=>{const s=accStats(a.id);return `
     <div class="acct" onclick="openAccount('${a.id}')">
       <div class="acct-top"><div class="acct-nm">${esc(a.name)}<span>${esc(last4(a.number))}${a.bank?' · '+esc(a.bank):''}</span></div><div class="chev">›</div></div>
-      <div class="acct-bal ${s.bal<0?'red':''}">${tk(s.bal)}</div><div class="acct-lbl">Available balance</div>
+      <div class="acct-bal tapbal ${s.bal<0&&!balHidden()?'red':''}">${balHtml(s.bal)}</div><div class="acct-lbl">Available balance</div>
       ${s.nP?`<div class="pill">⏳ ${s.nP} pending · ${tk(s.iP)}</div>`:''}
     </div>`;}).join('');
 }
 
 function renderCash(){
   const cs=cashStats();
-  $('cBal').textContent=tk(cs.bal);$('cIn').textContent=tk(cs.inn);$('cOut').textContent=tk(cs.out);$('cCount').textContent=cs.n;
+  $('cBal').textContent=balTxt(cs.bal);$('cIn').textContent=tk(cs.inn);$('cOut').textContent=tk(cs.out);$('cCount').textContent=cs.n;
   const src={};db.txns.filter(t=>t.type==='withdraw').forEach(t=>{src[t.accId]=(src[t.accId]||0)+t.amount;});
   let sh=cs.open?`<div class="src"><span>Opening cash</span><b>${tk(cs.open)}</b></div>`:'';
   sh+=Object.entries(src).sort((a,b)=>b[1]-a[1]).map(([id,v])=>`<div class="src"><span>🏦 ${esc(accName(id))}</span><b class="green">${tk(v)}</b></div>`).join('');
@@ -527,7 +536,7 @@ function renderStatement(){
   const s=accStats(a.id);
   $('sName').textContent=a.name;
   $('sMeta').textContent=[a.bank,a.number?'A/C '+a.number:''].filter(Boolean).join(' · ')||'—';
-  $('sBal').textContent=tk(s.bal);$('sC').textContent=tk(s.c);$('sI').textContent=tk(s.iR);$('sW').textContent=tk(s.w);$('sP').textContent=s.nP?`${tk(s.iP)} (${s.nP})`:tk(0);
+  $('sBal').textContent=balTxt(s.bal);$('sC').textContent=tk(s.c);$('sI').textContent=tk(s.iR);$('sW').textContent=tk(s.w);$('sP').textContent=s.nP?`${tk(s.iP)} (${s.nP})`:tk(0);
   const hasTx=db.txns.some(t=>t.accId===a.id);
   $('delAccBtn').style.display=hasTx?'none':'';
   // pending section
@@ -650,11 +659,20 @@ function saveTxn(){
   toast(txnType==='credit'?(t.incStatus==='pending'?'Remittance added · incentive pending':'Remittance + incentive added'):txnType==='withdraw'?'Moved to Cash':'Paid to party');
 }
 
+/* ---------- tap to show balance ---------- */
+function showBal(){balShown=true;clearTimeout(balTimer);balTimer=setTimeout(hideBal,10000);render();}
+function hideBal(){clearTimeout(balTimer);if(!balShown)return;balShown=false;render();}
+function toggleBal(){closeMenu();balShown?hideBal():showBal();}
+// while hidden, tapping a balance reveals it instead of opening the item underneath
+document.addEventListener('click',e=>{if(balHidden()&&e.target.closest('.tapbal')){e.stopPropagation();e.preventDefault();showBal();}},true);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)hideBal();});
+function saveHideBal(){db.hideBal=$('hideBalInput').checked;balShown=false;save();render();toast(db.hideBal?'Balances hidden until tapped':'Balances always shown');}
+
 /* ---------- menu, settings, backup ---------- */
 function toggleMenu(e){e.stopPropagation();$('menu').classList.toggle('show');}
 function closeMenu(){$('menu').classList.remove('show');}
 document.addEventListener('click',e=>{if(!e.target.closest('.menu'))closeMenu();});
-function openSettings(){closeMenu();$('rateInput').value=db.rate;$('openCashInput').value=db.openCash||'';$('setModal').classList.add('show');}
+function openSettings(){closeMenu();$('rateInput').value=db.rate;$('openCashInput').value=db.openCash||'';$('hideBalInput').checked=db.hideBal!==false;$('setModal').classList.add('show');}
 function saveRate(){const r=parseFloat($('rateInput').value);if(isNaN(r)||r<0)return toast('Invalid rate');db.rate=r;save();render();toast('Rate saved');}
 function saveOpenCash(){db.openCash=+$('openCashInput').value||0;save();render();toast('Opening cash saved');}
 function exportData(){
