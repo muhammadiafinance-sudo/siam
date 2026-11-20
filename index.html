@@ -174,6 +174,52 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 .wrap{padding-bottom:calc(40px + var(--safe-area-inset-bottom,env(safe-area-inset-bottom)))}
 .side-head{padding-top:calc(16px + var(--safe-area-inset-top,env(safe-area-inset-top)))}
 .tapbal{cursor:pointer;user-select:none;-webkit-user-select:none}
+/* ---------- formal statement ---------- */
+.stmt{background:#fff;border:1px solid #dfe3ea;border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(16,32,64,.05);margin-bottom:14px;font-variant-numeric:tabular-nums}
+.st-head{padding:18px 18px 14px;border-bottom:3px solid var(--navy);display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.st-doc{font-size:11px;font-weight:700;letter-spacing:2.2px;color:var(--muted);text-transform:uppercase}
+.st-name{font-size:19px;font-weight:700;color:var(--navy);margin-top:4px;line-height:1.2}
+.st-brand{text-align:right;font-size:11px;color:var(--muted);line-height:1.5;white-space:nowrap}
+.st-brand b{display:block;font-size:15px;color:var(--navy);letter-spacing:.5px}
+.st-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;padding:14px 18px;background:#fafbfc;border-bottom:1px solid #e8ebf0}
+.st-meta div{min-width:0}
+.st-meta span{display:block;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.st-meta b{display:block;font-size:13px;font-weight:600;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-sum{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #e8ebf0}
+.st-sum div{padding:12px 18px;border-right:1px solid #e8ebf0;border-top:1px solid #e8ebf0}
+.st-sum div:nth-child(2n){border-right:0}
+.st-sum div:nth-child(-n+2){border-top:0}
+.st-sum span{display:block;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.st-sum b{display:block;font-size:15px;margin-top:3px}
+.st-sum small{font-size:11px;color:var(--muted);font-weight:500}
+@media(min-width:600px){.st-sum{grid-template-columns:repeat(4,1fr)}.st-sum div{border-top:0!important;border-right:1px solid #e8ebf0!important}.st-sum div:last-child{border-right:0!important}.st-meta{grid-template-columns:repeat(4,1fr)}}
+.st-tbl{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+.st-tbl th{background:var(--navy);color:#fff;font-size:9.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:9px 6px;text-align:left}
+.st-tbl th.n,.st-tbl td.n{text-align:right}
+.st-tbl th:first-child,.st-tbl td:first-child{padding-left:14px}
+.st-tbl th:last-child,.st-tbl td:last-child{padding-right:14px}
+.st-tbl td{padding:10px 6px;border-bottom:1px solid #eef0f4;vertical-align:top;line-height:1.35}
+.st-tbl tbody tr:nth-child(even) td{background:#fafbfd}
+.st-tbl td.n{white-space:nowrap;font-weight:500}
+.st-tbl td.dr{color:var(--red)}.st-tbl td.cr{color:var(--green)}
+.st-tbl td.bl{font-weight:700;color:var(--text)}
+.st-tbl .dt{font-weight:600;white-space:nowrap}.st-tbl .yr{font-size:10px;color:var(--muted)}
+.st-tbl .ds{font-weight:600;word-break:break-word}.st-tbl .ss{font-size:10.5px;color:var(--muted);margin-top:2px;word-break:break-word}
+.st-tbl tr.st-ob td{background:#f3f6fb!important;font-weight:600;color:var(--navy)}
+.st-tbl tr.st-cb td{background:#e9eff8!important;font-weight:700;color:var(--navy);border-top:2px solid var(--navy);border-bottom:0}
+.st-tbl .w-dt{width:60px}.st-tbl .w-am{width:84px}.st-tbl .w-bl{width:84px}
+.st-tbl.nar td.n{font-size:11.5px}
+.st-meta .full{grid-column:1/-1}
+@media(min-width:600px){.st-tbl{font-size:13px}.st-tbl .w-dt{width:84px}.st-tbl .w-am{width:112px}.st-tbl .w-bl{width:124px}
+  .st-tbl th{font-size:10.5px;padding:10px 10px}.st-tbl td{padding:11px 10px}
+  .st-meta .full{grid-column:auto}}
+.st-empty{padding:28px 16px;text-align:center;color:var(--muted);font-size:13px}
+.st-foot{padding:12px 18px 14px;font-size:10.5px;color:var(--muted);text-align:center;letter-spacing:.3px}
+@media print{
+  #statement .split>div:first-child,#tab-sunnah .split>div:first-child,.stmt-period,#pendBar,#updBar,.cards,.page-title{display:none!important}
+  .stmt{border:0;box-shadow:none;border-radius:0}.st-tbl th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .st-tbl tr{page-break-inside:avoid}
+}
 /* bank-card style account tiles */
 .bcard{position:relative;aspect-ratio:1.586;border-radius:16px;padding:16px 18px;color:#fff;cursor:pointer;overflow:hidden;
   box-shadow:0 6px 16px rgba(0,0,0,.18);display:flex;flex-direction:column;justify-content:space-between;transition:transform .15s}
@@ -317,11 +363,11 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
         <button class="btn btn-o" style="flex:1" onclick="openTxn('cashin')">+ Add</button>
       </div>
       </div><div>
-      <div class="row">
+      <div class="row stmt-period">
         <input type="date" id="cFrom" style="flex:1;min-width:130px">
         <input type="date" id="cTo" style="flex:1;min-width:130px">
       </div>
-      <div class="ledger" id="cLedger"></div>
+      <div id="cLedger"></div>
     </div></div></div>
 
     <div id="tab-history" style="display:none">
@@ -379,7 +425,11 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
     </div>
     <div id="sPending"></div>
     </div><div>
-    <div class="ledger" id="sLedger"></div>
+    <div class="row stmt-period">
+      <input type="date" id="sFrom" style="flex:1;min-width:130px">
+      <input type="date" id="sTo" style="flex:1;min-width:130px">
+    </div>
+    <div id="sLedger"></div>
     </div></div>
   </div>
 </div>
@@ -581,6 +631,39 @@ function ledgerHTML(rows,emptyMsg,pref){
   return html;
 }
 const subJoin=(...p)=>p.filter(Boolean).join(' · ');
+const fmtN=n=>r2(n).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtDs=s=>{const [y,m,d]=s.split('-');return `<div class="dt">${d} ${MON[+m-1]}</div><div class="yr">${y}</div>`;};
+// Formal bank-style statement. rows: oldest first {date,title,sub,amt}; amounts before `from` roll into the opening balance.
+function stmtHTML(o){
+  const from=o.from,to=o.to;let open=o.opening||0;const list=[];
+  o.rows.forEach(r=>{if(from&&r.date<from)open+=r.amt;else if(!to||r.date<=to)list.push(r);});
+  let bal=open,cr=0,dr=0,nc=0,nd=0;
+  const nar=window.innerWidth<600,cols=nar?4:5;
+  const body=list.map(r=>{bal+=r.amt;if(r.amt>0){cr+=r.amt;nc++;}else if(r.amt<0){dr-=r.amt;nd++;}
+    return `<tr><td>${fmtDs(r.date)}</td><td><div class="ds">${r.title}</div>${r.sub?`<div class="ss">${r.sub}</div>`:''}</td>
+      ${nar?`<td class="n ${r.amt<0?'dr':'cr'}">${r.amt<0?'−':'+'}${fmtN(Math.abs(r.amt))}</td>`
+        :`<td class="n dr">${r.amt<0?fmtN(-r.amt):''}</td><td class="n cr">${r.amt>0?fmtN(r.amt):''}</td>`}<td class="n bl">${fmtN(bal)}</td></tr>`;}).join('');
+  const p1=from||(list[0]&&list[0].date)||o.since||today(),p2=to||today();
+  return `<div class="stmt">
+    <div class="st-head"><div><div class="st-doc">${o.doc||'Statement of Account'}</div><div class="st-name">${esc(o.name)}</div></div>
+      <div class="st-brand"><b>SUNNAH</b>Generated ${fmtD(today())}</div></div>
+    <div class="st-meta">${o.meta.filter(m=>m[1]).map(m=>`<div><span>${m[0]}</span><b>${esc(m[1])}</b></div>`).join('')}
+      <div class="full"><span>Period</span><b>${fmtD(p1)} – ${fmtD(p2)}</b></div><div><span>Currency</span><b>BDT</b></div></div>
+    <div class="st-sum">
+      <div><span>Opening Balance</span><b>${fmtN(open)}</b></div>
+      <div><span>Total Credits</span><b class="green">${fmtN(cr)}</b><small>${nc} entr${nc===1?'y':'ies'}</small></div>
+      <div><span>Total Debits</span><b class="red">${fmtN(dr)}</b><small>${nd} entr${nd===1?'y':'ies'}</small></div>
+      <div><span>Closing Balance</span><b>${fmtN(bal)}</b></div>
+    </div>
+    <table class="st-tbl${nar?' nar':''}">
+      <thead><tr><th class="w-dt">Date</th><th>Particulars</th>${nar?'<th class="n w-am">Amount</th>':'<th class="n w-am">Debit</th><th class="n w-am">Credit</th>'}<th class="n w-bl">Balance</th></tr></thead>
+      <tbody><tr class="st-ob"><td colspan="${cols-1}">Balance brought forward</td><td class="n">${fmtN(open)}</td></tr>
+      ${body||`<tr><td colspan="${cols}" class="st-empty">No transactions in this period</td></tr>`}
+      <tr class="st-cb"><td colspan="${cols-1}">Closing balance</td><td class="n">${fmtN(bal)}</td></tr></tbody>
+    </table>
+    <div class="st-foot">This is a system generated statement and does not require a signature.</div>
+  </div>`;
+}
 
 /* ---------- home ---------- */
 function render(){
@@ -615,7 +698,7 @@ function evRow(e,withAcc){
   switch(e.k){
     case 'credit':return {amt:a,title:'Remittance received',sub:subJoin(acc,t.incStatus==='pending'?'<span class="gold">Incentive pending</span>':'',esc(t.note))};
     case 'receive':return {amt:a,title:'Fund received',sub:subJoin(acc,esc(t.note))};
-    case 'inc':return {amt:a,title:'Incentive received '+(t.rate!=null?t.rate:db.rate)+'%',sub:subJoin(acc,'For '+tk(t.amount)+' on '+fmtD(t.date))};
+    case 'inc':return {amt:a,title:'Incentive received '+(t.rate!=null?t.rate:db.rate)+'%',sub:subJoin(acc,'On remittance of '+tk(t.amount))};
     case 'withdraw':return {amt:-a,title:'Cash withdrawal',sub:subJoin(acc,esc(t.note))};
     case 'transfer':return {amt:-a,title:'Paid to Sunnah',sub:subJoin('Fund Transfer',acc,esc(t.note))};
     case 'move':return {amt:0,amtTxt:tk(a),cls:'neu',title:'Account to account transfer',sub:subJoin(''+esc(accName(t.accId))+' → '+esc(accName(t.toAcc)),esc(t.note))};
@@ -626,13 +709,9 @@ function evRow(e,withAcc){
 function renderSunnah(){
   const ss=sunStats();
   $('sBalS').textContent=tk(ss.bal);$('sGot').textContent=tk(ss.got);$('sPaid').textContent=tk(ss.paid);
-  const f=$('cFrom').value,to=$('cTo').value;let bal=0;const rows=[];
-  allEvents().forEach(e=>{
-    const d=SUN_DELTA[e.k];if(!d)return;bal+=evAmt(e)*d;
-    if((f&&e.date<f)||(to&&e.date>to))return;
-    const r=evRow(e,true);r.date=e.date;r.bal=bal;rows.push(r);
-  });
-  $('cLedger').innerHTML=ledgerHTML(rows.reverse(),'No transactions','sunlg');
+  const rows=[];
+  allEvents().forEach(e=>{const d=SUN_DELTA[e.k];if(!d)return;const r=evRow(e,true);rows.push({date:e.date,title:r.title,sub:r.sub,amt:evAmt(e)*d});});
+  $('cLedger').innerHTML=stmtHTML({doc:'Statement of Sunnah Balance',name:'Sunnah',meta:[['Party','Sunnah'],['Type','Payable balance']],rows,opening:0,from:$('cFrom').value,to:$('cTo').value});
 }
 
 function renderHistory(){
@@ -649,7 +728,7 @@ function renderHistory(){
 }
 
 /* ---------- account statement ---------- */
-function openAccount(id){curAcc=id;$('home').style.display='none';$('statement').style.display='block';renderStatement();window.scrollTo(0,0);}
+function openAccount(id){curAcc=id;$('sFrom').value='';$('sTo').value='';$('home').style.display='none';$('statement').style.display='block';renderStatement();window.scrollTo(0,0);}
 function goHome(){closeMenu();curAcc=null;$('statement').style.display='none';$('home').style.display='block';render();}
 function renderStatement(){
   const a=accOf(curAcc);if(!a)return goHome();
@@ -667,20 +746,19 @@ function renderStatement(){
       <div class="tx-r"><div class="tx-a gold">${tk(incOf(t))}</div><button class="btn btn-g btn-sm" style="margin-top:6px" onclick="openReceive('${t.id}')">Received</button></div></div>`).join('')+'</div>':'';
   // posted ledger
   let bal=s.open;const rows=[];
-  if(s.open)rows.push({date:a.created,amt:s.open,bal,title:'Opening balance'});
   allEvents().filter(e=>e.t.accId===a.id||e.t.toAcc===a.id).forEach(e=>{
     const t=e.t;
     if(e.k==='credit'){bal+=t.amount;rows.push({date:e.date,amt:t.amount,bal,title:'Remittance received',
       sub:subJoin(t.party?'From '+esc(t.party):'',t.incStatus==='pending'?'<span class="gold">Incentive pending</span>':'',esc(t.note))});}
     else if(e.k==='inc'){const v=incOf(t);bal+=v;rows.push({date:e.date,amt:v,bal,title:'Incentive received '+(t.rate!=null?t.rate:db.rate)+'%',
-      sub:'For remittance '+tk(t.amount)+' on '+fmtD(t.date)});}
+      sub:'On remittance of '+tk(t.amount)});}
     else if(e.k==='receive'){bal+=t.amount;rows.push({date:e.date,amt:t.amount,bal,title:'Fund received',sub:esc(t.note)});}
     else if(e.k==='withdraw'){bal-=t.amount;rows.push({date:e.date,amt:-t.amount,bal,title:'Cash withdrawal',sub:esc(t.note)});}
     else if(e.k==='transfer'){bal-=t.amount;rows.push({date:e.date,amt:-t.amount,bal,title:'Fund transfer to Sunnah',sub:esc(t.note)});}
     else if(e.k==='move'){const out=t.accId===a.id;bal+=out?-t.amount:t.amount;
       rows.push({date:e.date,amt:out?-t.amount:t.amount,bal,title:out?'Fund transfer to '+esc(accName(t.toAcc)):'Fund received from '+esc(accName(t.accId)),sub:esc(t.note)});}
   });
-  $('sLedger').innerHTML='<div class="lg-title">Transactions</div>'+ledgerHTML(rows.reverse(),'No transactions yet.','st'+a.id);
+  $('sLedger').innerHTML=stmtHTML({name:a.name,meta:[['Account No',a.number||'—'],['Bank',a.bank||'—']],rows,opening:s.open,since:a.created,from:$('sFrom').value,to:$('sTo').value});
 }
 
 /* ---------- pending incentives ---------- */
@@ -869,10 +947,12 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{closeSide();if
 $('accSearch').oninput=renderAccounts;
 ['hFrom','hTo','hType'].forEach(id=>$(id).onchange=renderHistory);
 ['cFrom','cTo'].forEach(id=>$(id).onchange=renderSunnah);
+['sFrom','sTo'].forEach(id=>$(id).onchange=renderStatement);
 
 /* scale up on phones so the app looks like a normal-size mobile app */
 function fitMobile(){const w=window.innerWidth,z=w<768?Math.min(1.6,Math.max(1,w/410)):1;const r=document.documentElement;r.style.zoom=z;r.style.setProperty("--vh",(window.innerHeight/z/100)+"px");}
 fitMobile();window.addEventListener("resize",fitMobile);
+let lastNar=window.innerWidth<600;window.addEventListener('resize',()=>{const n=window.innerWidth<600;if(n!==lastNar){lastNar=n;renderSunnah();if(curAcc)renderStatement();}});
 load();render();initSync();if(db.pin&&db.pin.hash)lockApp();
 setTimeout(checkUpdate,1500);
 
