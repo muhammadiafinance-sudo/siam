@@ -274,7 +274,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
         <input type="date" id="hFrom" style="flex:1;min-width:130px">
         <input type="date" id="hTo" style="flex:1;min-width:130px">
         <select id="hType" style="flex:1;min-width:130px">
-          <option value="">All types</option><option value="credit">Remittance In</option><option value="receive">Fund Receive</option><option value="inc">Incentive Received</option><option value="withdraw">Cash Withdrawal</option><option value="transfer">Fund Transfer</option><option value="pay">Cash Paid to Sunnah</option><option value="cashin">Cash Added</option>
+          <option value="">All types</option><option value="credit">Remittance In</option><option value="receive">Fund Receive</option><option value="inc">Incentive Received</option><option value="withdraw">Cash Withdrawal</option><option value="transfer">Fund Transfer to Sunnah</option><option value="move">Account to Account</option><option value="pay">Cash Paid to Sunnah</option><option value="cashin">Cash Added</option>
         </select>
       </div>
       <div class="cards">
@@ -319,7 +319,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
     <div class="actgrid">
       <button class="btn btn-g" onclick="openTxn('credit')">+ Remittance In</button>
       <button class="btn btn-g" onclick="openTxn('receive')">+ Fund Receive</button>
-      <button class="btn btn-pu" onclick="openPay('transfer',curAcc)">− Fund Transfer</button>
+      <button class="btn btn-pu" onclick="openTransfer(curAcc)">− Fund Transfer</button>
       <button class="btn btn-r" onclick="openTxn('withdraw')">− Cash Withdrawal</button>
     </div>
     <div id="sPending"></div>
@@ -349,7 +349,8 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
   <div class="hint" id="tHint" style="margin:-4px 0 10px"></div>
   <div class="f" id="tMethodWrap"><label>Pay by</label>
     <div class="seg"><button type="button" data-m="pay" onclick="setMethod('pay')">💵 Cash</button><button type="button" data-m="transfer" onclick="setMethod('transfer')">🏦 Fund Transfer</button></div></div>
-  <div class="f" id="tAccWrap"><label>From account</label><select id="tAcc" onchange="txnHint()"></select></div>
+  <div class="f" id="tAccWrap"><label>From account</label><select id="tAcc" onchange="fillTo();txnHint()"></select></div>
+  <div class="f" id="tToWrap"><label>To</label><select id="tTo" onchange="txnHint()"></select></div>
   <div class="f"><label>Note</label><input id="tNote"></div>
   <div class="mbtns"><button class="btn btn-o" onclick="closeModal('txnModal')">Cancel</button><button class="btn btn-p" id="tSave" onclick="saveTxn()">Save</button></div>
 </div></div>
@@ -441,17 +442,18 @@ function migrate4(){
 
 /* ---------- calculations ---------- */
 function accStats(id){
-  let c=0,rcv=0,iR=0,iP=0,nP=0,w=0,tr=0;const a=accOf(id);const open=a?(+a.opening||0):0;
+  let c=0,rcv=0,iR=0,iP=0,nP=0,w=0,tr=0,mvIn=0,mvOut=0;const a=accOf(id);const open=a?(+a.opening||0):0;
   db.txns.forEach(t=>{if(t.accId!==id)return;
     if(t.type==='credit'){c+=t.amount;if(t.incStatus==='pending'){iP+=incOf(t);nP++;}else iR+=incOf(t);}
     else if(t.type==='receive')rcv+=t.amount;
     else if(t.type==='withdraw')w+=t.amount;
     else if(t.type==='transfer')tr+=t.amount;});
-  return {c,rcv,iR,iP,nP,w,tr,open,bal:open+c+rcv+iR-w-tr};
+  db.txns.forEach(t=>{if(t.type!=='move')return;if(t.accId===id)mvOut+=t.amount;if(t.toAcc===id)mvIn+=t.amount;});
+  return {c,rcv,iR,iP,nP,w,tr,mvIn,mvOut,open,bal:open+c+rcv+iR-w-tr+mvIn-mvOut};
 }
 // Sunnah balance = remittance + fund received + received incentive + manual cash − payments (cash or transfer).
 // Withdrawals only move part of it from accounts into cash.
-const SUN_DELTA={credit:1,receive:1,inc:1,cashin:1,pay:-1,transfer:-1,withdraw:0};
+const SUN_DELTA={move:0,credit:1,receive:1,inc:1,cashin:1,pay:-1,transfer:-1,withdraw:0};
 const CASH_DELTA={withdraw:1,cashin:1,pay:-1};
 const evAmt=e=>e.k==='inc'?incOf(e.t):e.t.amount;
 function sunStats(){
@@ -518,7 +520,8 @@ function evRow(e,withAcc){
     case 'receive':return {amt:a,title:'Fund received',sub:subJoin(acc,esc(t.note))};
     case 'inc':return {amt:a,title:'Incentive received '+(t.rate!=null?t.rate:db.rate)+'%',sub:subJoin(acc,'For '+tk(t.amount)+' on '+fmtD(t.date))};
     case 'withdraw':return {amt:-a,title:'Cash withdrawal',sub:subJoin(acc,esc(t.note))};
-    case 'transfer':return {amt:-a,title:'Fund transfer',sub:subJoin(acc,esc(t.note))};
+    case 'transfer':return {amt:-a,title:'Fund transfer to Sunnah',sub:subJoin(acc,esc(t.note))};
+    case 'move':return {amt:0,amtTxt:'⇄ '+tk(a),cls:'neu',title:'Account to account transfer',sub:subJoin('🏦 '+esc(accName(t.accId))+' → '+esc(accName(t.toAcc)),esc(t.note))};
     case 'pay':return {amt:-a,title:'Cash paid to Sunnah',sub:subJoin('💵 Cash',esc(t.note))};
     case 'cashin':return {amt:a,title:'Cash added',sub:subJoin('💵 Cash',esc(t.note))};
   }
@@ -529,7 +532,7 @@ function renderSunnah(){
   const f=$('cFrom').value,to=$('cTo').value;let bal=0;const rows=[];
   allEvents().forEach(e=>{
     const a=evAmt(e),d=SUN_DELTA[e.k]||0;bal+=a*d;
-    if((f&&e.date<f)||(to&&e.date>to))return;
+    if(e.k==='move'||(f&&e.date<f)||(to&&e.date>to))return;
     const r=evRow(e,true);r.date=e.date;r.bal=bal;
     if(e.k==='withdraw'){r.amtTxt='⇄ '+tk(a);r.amt=0;r.cls='neu';r.sub=subJoin(r.sub,'Account → Cash');}
     rows.push(r);
@@ -559,7 +562,7 @@ function renderStatement(){
   $('sName').textContent=a.name;
   $('sMeta').textContent=[a.bank,a.number?'A/C '+a.number:''].filter(Boolean).join(' · ')||'—';
   $('sBal').textContent=balTxt(s.bal);$('sC').textContent=tk(s.c);$('sI').textContent=tk(s.iR);$('sW').textContent=tk(s.w);$('sR').textContent=tk(s.rcv);$('sT').textContent=tk(s.tr);$('sP').textContent=s.nP?`${tk(s.iP)} (${s.nP})`:tk(0);
-  const hasTx=db.txns.some(t=>t.accId===a.id);
+  const hasTx=db.txns.some(t=>t.accId===a.id||t.toAcc===a.id);
   $('delAccBtn').disabled=hasTx;$('delAccBtn').innerHTML=hasTx?'🗑 Delete Account<small>Not possible: account has transactions</small>':'🗑 Delete Account';
   // pending section
   const pl=pendingList().filter(t=>t.accId===a.id);
@@ -570,7 +573,7 @@ function renderStatement(){
   // posted ledger
   let bal=s.open;const rows=[];
   if(s.open)rows.push({date:a.created,amt:s.open,bal,title:'Opening balance'});
-  allEvents().filter(e=>e.t.accId===a.id).forEach(e=>{
+  allEvents().filter(e=>e.t.accId===a.id||e.t.toAcc===a.id).forEach(e=>{
     const t=e.t;
     if(e.k==='credit'){bal+=t.amount;rows.push({date:e.date,amt:t.amount,bal,title:'Remittance received',
       sub:subJoin(t.party?'From '+esc(t.party):'',t.incStatus==='pending'?'<span class="tag tag-p">INCENTIVE PENDING</span>':'',esc(t.note))});}
@@ -578,7 +581,9 @@ function renderStatement(){
       sub:'For remittance '+tk(t.amount)+' on '+fmtD(t.date)});}
     else if(e.k==='receive'){bal+=t.amount;rows.push({date:e.date,amt:t.amount,bal,title:'Fund received',sub:esc(t.note)});}
     else if(e.k==='withdraw'){bal-=t.amount;rows.push({date:e.date,amt:-t.amount,bal,title:'Cash withdrawal',sub:esc(t.note)});}
-    else if(e.k==='transfer'){bal-=t.amount;rows.push({date:e.date,amt:-t.amount,bal,title:'Fund transfer',sub:esc(t.note)});}
+    else if(e.k==='transfer'){bal-=t.amount;rows.push({date:e.date,amt:-t.amount,bal,title:'Fund transfer to Sunnah',sub:esc(t.note)});}
+    else if(e.k==='move'){const out=t.accId===a.id;bal+=out?-t.amount:t.amount;
+      rows.push({date:e.date,amt:out?-t.amount:t.amount,bal,title:out?'Fund transfer to '+esc(accName(t.toAcc)):'Fund received from '+esc(accName(t.accId)),sub:esc(t.note)});}
   });
   $('sLedger').innerHTML='<div class="lg-title">Transactions</div>'+ledgerHTML(rows.reverse(),'No transactions yet.');
 }
@@ -613,7 +618,7 @@ function confirmReceive(){
 function openAccModal(acc){
   editingAcc=acc||null;$('accModalTitle').textContent=acc?'Edit Account':'Add Account';
   $('aName').value=acc?acc.name:'';$('aNum').value=acc?acc.number||'':'';$('aBank').value=acc?acc.bank||'':'';$('aOpen').value=acc&&acc.opening?acc.opening:'';
-  const locked=acc&&db.txns.some(t=>t.accId===acc.id);
+  const locked=acc&&db.txns.some(t=>t.accId===acc.id||t.toAcc===acc.id);
   $('aOpen').disabled=!!locked;
   $('accModal').classList.add('show');setTimeout(()=>$('aName').focus(),100);
 }
@@ -627,7 +632,7 @@ function saveAccount(){
 function editAccount(){openAccModal(accOf(curAcc));}
 function deleteAccount(){
   const a=accOf(curAcc);
-  if(db.txns.some(t=>t.accId===curAcc))return toast('Account has transactions — cannot delete');
+  if(db.txns.some(t=>t.accId===curAcc||t.toAcc===curAcc))return toast('Account has transactions — cannot delete');
   if(!confirm(`Delete empty account "${a.name}"?`))return;
   db.accounts=db.accounts.filter(x=>x.id!==curAcc);save();toast('Account deleted');goHome();
 }
@@ -645,12 +650,13 @@ function setMethod(m){
   txnType=m;
   document.querySelectorAll('#tMethodWrap [data-m]').forEach(b=>b.classList.toggle('on',b.dataset.m===m));
   $('tAccWrap').style.display=m==='transfer'?'block':'none';
+  $('tToWrap').style.display='none';
   txnHint();
 }
 function openTxn(type){
   txnType=type;
   $('tPendWrap').style.display=type==='credit'?'block':'none';
-  $('tMethodWrap').style.display='none';$('tAccWrap').style.display='none';
+  $('tMethodWrap').style.display='none';$('tAccWrap').style.display='none';$('tToWrap').style.display='none';
   $('txnTitle').textContent=TXN_UI[type].title;$('tSave').className=TXN_UI[type].cls;
   resetTxnForm();
 }
@@ -660,6 +666,21 @@ function openPay(method,accId){
   if(accId)$('tAcc').value=accId;
   $('txnTitle').textContent='Pay Sunnah';$('tSave').className='btn btn-pu';
   resetTxnForm();setMethod(method||'pay');
+}
+const accOpts=list=>list.map(a=>`<option value="${a.id}">${esc(a.name)}${esc(last4(a.number))}</option>`).join('');
+// "To" choices: Sunnah or any other account
+function fillTo(){
+  const from=$('tAcc').value,cur=$('tTo').value;
+  $('tTo').innerHTML='<option value="sunnah">👤 Sunnah</option>'+accOpts(db.accounts.filter(a=>a.id!==from));
+  if([...$('tTo').options].some(o=>o.value===cur))$('tTo').value=cur;
+}
+function openTransfer(accId){
+  txnType='transfer';
+  $('tPendWrap').style.display='none';$('tMethodWrap').style.display='none';
+  $('tAcc').innerHTML=accOpts(db.accounts);$('tAcc').value=accId;$('tTo').value='';fillTo();$('tTo').value='sunnah';
+  $('tAccWrap').style.display='block';$('tToWrap').style.display='block';
+  $('txnTitle').textContent='Fund Transfer';$('tSave').className='btn btn-pu';
+  resetTxnForm();
 }
 function resetTxnForm(){
   $('tDate').value=today();$('tAmt').value='';$('tNote').value='';$('tPend').checked=false;
@@ -684,13 +705,17 @@ function saveTxn(){
   }else if(txnType==='withdraw'||txnType==='transfer'){
     t.accId=txnType==='withdraw'?curAcc:$('tAcc').value;
     if(!t.accId)return toast('Select an account');
+    if(txnType==='transfer'&&$('tToWrap').style.display!=='none'&&$('tTo').value!=='sunnah'){
+      t.type='move';t.toAcc=$('tTo').value;
+      if(t.toAcc===t.accId)return toast('Choose a different account');
+    }
     if(amt>accStats(t.accId).bal&&!confirm('Amount is more than account balance. Save anyway?'))return;
   }else if(txnType==='pay'){
     if(amt>sunStats().cash&&!confirm('Amount is more than cash. Save anyway?'))return;
   }
   if(!confirm('Save this entry? It cannot be deleted later.'))return;
   db.txns.push(t);save();closeModal('txnModal');render();
-  toast({credit:t.incStatus==='pending'?'Remittance added · incentive pending':'Remittance + incentive added',receive:'Fund received',withdraw:'Cash withdrawn',transfer:'Fund transfer saved',pay:'Cash paid to Sunnah',cashin:'Cash added'}[txnType]);
+  toast(t.type==='move'?'Transferred to '+accName(t.toAcc):{credit:t.incStatus==='pending'?'Remittance added · incentive pending':'Remittance + incentive added',receive:'Fund received',withdraw:'Cash withdrawn',transfer:'Fund transfer saved',pay:'Cash paid to Sunnah',cashin:'Cash added'}[txnType]);
 }
 
 /* ---------- tap to show balance ---------- */
