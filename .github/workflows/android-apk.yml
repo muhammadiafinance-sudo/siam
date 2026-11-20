@@ -1,0 +1,64 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main, ccr-95992d41-q53y58]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install
+        run: npm ci
+
+      - name: Prepare Android project
+        run: |
+          npm run build:www
+          npx cap add android
+          npx capacitor-assets generate --android
+          npx cap sync android
+          # every build gets a higher version so it installs over the previous one
+          sed -i "s/versionCode 1$/versionCode ${{ github.run_number }}/; s/versionName \"1.0\"/versionName \"1.0.${{ github.run_number }}\"/" android/app/build.gradle
+          grep -n "versionCode\|versionName" android/app/build.gradle
+
+      - name: Build APK
+        run: |
+          # same signing key every build, so updates keep your data
+          mkdir -p ~/.android && cp android-signing/debug.keystore ~/.android/debug.keystore
+          cd android && chmod +x gradlew && ./gradlew --no-daemon assembleDebug
+          cp app/build/outputs/apk/debug/app-debug.apk ../RemittanceTracker.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RemittanceTracker-apk
+          path: RemittanceTracker.apk
+
+      - name: Publish download link (GitHub Release "apk")
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete apk --yes --cleanup-tag || true
+          gh release create apk RemittanceTracker.apk \
+            --target "$GITHUB_SHA" \
+            --title "Remittance Tracker - Android APK (build ${{ github.run_number }})" \
+            --notes "Download RemittanceTracker.apk on your Android phone and open it to install. Built from ${GITHUB_SHA::7}."

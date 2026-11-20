@@ -137,7 +137,7 @@ input[type=checkbox]{width:20px;height:20px;flex:none}
 .side .foot{margin-top:auto;font-size:12px;color:var(--muted);padding:10px 14px;line-height:1.5}
 .hl{display:flex;align-items:center;gap:6px}
 .burger{margin-left:-8px}
-.bnav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;z-index:30;padding-bottom:env(safe-area-inset-bottom);box-shadow:0 -2px 10px rgba(0,0,0,.06)}
+.bnav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;z-index:30;padding-bottom:var(--safe-area-inset-bottom,env(safe-area-inset-bottom));box-shadow:0 -2px 10px rgba(0,0,0,.06)}
 .bnav button{flex:1;background:none;border:0;padding:8px 2px 8px;font-size:11px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font-weight:600}
 .bnav button i{font-style:normal;font-size:20px;filter:grayscale(1);opacity:.7}
 .bnav button.active{color:var(--blue)}
@@ -170,11 +170,12 @@ input[type=checkbox]{width:20px;height:20px;flex:none}
 }
 @media(min-width:1440px){.grid-list{grid-template-columns:repeat(4,1fr)}}
 /* installed-app safe areas (notch / home bar) */
-header{padding-top:calc(12px + env(safe-area-inset-top));padding-left:calc(16px + env(safe-area-inset-left));padding-right:calc(16px + env(safe-area-inset-right))}
-.wrap{padding-bottom:calc(40px + env(safe-area-inset-bottom))}
-.side-head{padding-top:calc(16px + env(safe-area-inset-top))}
+header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top)));padding-left:calc(16px + var(--safe-area-inset-left,env(safe-area-inset-left)));padding-right:calc(16px + var(--safe-area-inset-right,env(safe-area-inset-right)))}
+.wrap{padding-bottom:calc(40px + var(--safe-area-inset-bottom,env(safe-area-inset-bottom)))}
+.side-head{padding-top:calc(16px + var(--safe-area-inset-top,env(safe-area-inset-top)))}
 .tapbal{cursor:pointer;user-select:none;-webkit-user-select:none}
 .masked{letter-spacing:1px;opacity:.9}
+.native .printBtn{display:none!important}
 .ios-steps{font-size:14px;line-height:1.7}
 @media print{header .hr,.tabs,.row,.back,.modal-bg,.pend-bar,.side,.bnav{display:none!important}body{background:#fff}.split{display:block!important}}
 </style>
@@ -195,7 +196,7 @@ header{padding-top:calc(12px + env(safe-area-inset-top));padding-left:calc(16px 
       <button onclick="exportData()">⬇️ Download Backup</button>
       <button onclick="document.getElementById('importFile').click()">⬆️ Restore Backup</button>
       <hr>
-      <button onclick="window.print()">🖨️ Print</button>
+      <button class="printBtn" onclick="window.print()">🖨️ Print</button>
       <button class="installBtn" onclick="installApp()" style="display:none">📲 Install App</button>
     </div>
   </div>
@@ -215,7 +216,7 @@ header{padding-top:calc(12px + env(safe-area-inset-top));padding-left:calc(16px 
   <button class="sbtn" onclick="closeSide();openSettings()">⚙️ Settings</button>
   <button class="sbtn" onclick="closeSide();exportData()">⬇️ Download Backup</button>
   <button class="sbtn" onclick="closeSide();document.getElementById('importFile').click()">⬆️ Restore Backup</button>
-  <button class="sbtn" onclick="closeSide();window.print()">🖨️ Print</button>
+  <button class="sbtn printBtn" onclick="closeSide();window.print()">🖨️ Print</button>
   <button class="sbtn installBtn" onclick="closeSide();installApp()" style="display:none">📲 Install App</button>
   <div class="foot">🔒 Entries are locked and cannot be deleted, like a bank statement.</div>
 </nav>
@@ -301,7 +302,7 @@ header{padding-top:calc(12px + env(safe-area-inset-top));padding-left:calc(16px 
     </div>
     <div class="row">
       <button class="btn btn-o btn-sm" onclick="editAccount()">✎ Edit Account</button>
-      <button class="btn btn-o btn-sm" onclick="window.print()">🖨 Print Statement</button>
+      <button class="btn btn-o btn-sm printBtn" onclick="window.print()">🖨 Print Statement</button>
       <button class="btn btn-o btn-sm red" id="delAccBtn" onclick="deleteAccount()">🗑 Delete Account</button>
     </div>
     <div id="sPending"></div>
@@ -378,6 +379,8 @@ header{padding-top:calc(12px + env(safe-area-inset-top));padding-left:calc(16px 
 
 <script>
 const KEY='remittance_tracker_v1';
+const isNative=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
+if(isNative)document.documentElement.classList.add('native');
 const $=id=>document.getElementById(id);
 let db={accounts:[],txns:[],rate:2.5,openCash:0,version:3};
 let curAcc=null,txnType='credit',editingAcc=null,rcvId=null,partyFilter=null;
@@ -675,8 +678,15 @@ document.addEventListener('click',e=>{if(!e.target.closest('.menu'))closeMenu();
 function openSettings(){closeMenu();$('rateInput').value=db.rate;$('openCashInput').value=db.openCash||'';$('hideBalInput').checked=db.hideBal!==false;$('setModal').classList.add('show');}
 function saveRate(){const r=parseFloat($('rateInput').value);if(isNaN(r)||r<0)return toast('Invalid rate');db.rate=r;save();render();toast('Rate saved');}
 function saveOpenCash(){db.openCash=+$('openCashInput').value||0;save();render();toast('Opening cash saved');}
-function exportData(){
+async function exportData(){
   closeMenu();
+  if(isNative){
+    try{const P=Capacitor.Plugins,name='remittance-backup-'+today()+'.json';
+      const r=await P.Filesystem.writeFile({path:name,data:JSON.stringify(db,null,2),directory:'CACHE',encoding:'utf8'});
+      await P.Share.share({title:'Remittance backup',text:name,files:[r.uri],dialogTitle:'Save or send backup'});
+    }catch(e){if(!/cancel/i.test(String(e&&e.message)))toast('Backup failed: '+(e&&e.message||e));}
+    return;
+  }
   const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='remittance-backup-'+today()+'.json';
   document.body.appendChild(a);a.click();a.remove();toast('Backup downloaded');
@@ -722,15 +732,32 @@ const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platfo
 const showInstall=on=>document.querySelectorAll('.installBtn').forEach(b=>b.style.display=on?'':'none');
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;showInstall(true);});
 window.addEventListener('appinstalled',()=>{deferredPrompt=null;showInstall(false);toast('App installed');});
-if(isIOS()&&!isStandalone())showInstall(true);
+if(!isNative&&isIOS()&&!isStandalone())showInstall(true);
 async function installApp(){
   closeMenu();
   if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;showInstall(false);}
   else if(isIOS())$('iosModal').classList.add('show');
   else toast('Use your browser menu → Install app / Add to Home screen');
 }
-if('serviceWorker' in navigator&&location.protocol!=='file:')window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+if(!isNative&&'serviceWorker' in navigator&&location.protocol!=='file:')window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
+
+/* ---------- Android app (Capacitor) ---------- */
+if(isNative){
+  $('importFile').removeAttribute('accept'); // Android file picker doesn't understand ".json"
+  const A=Capacitor.Plugins.App;
+  if(A)A.addListener('backButton',()=>{
+    const open=[...document.querySelectorAll('.modal-bg.show')];
+    if(open.length)return open.forEach(m=>m.classList.remove('show'));
+    if($('side').classList.contains('open'))return closeSide();
+    if($('menu').classList.contains('show'))return closeMenu();
+    if(curAcc)return goHome();
+    if(partyFilter){partyFilter=null;return renderHistory();}
+    if($('tab-accounts').style.display==='none'){switchTab('accounts');return window.scrollTo(0,0);}
+    A.minimizeApp?A.minimizeApp():A.exitApp();
+  });
+  A&&A.addListener('pause',()=>hideBal());
+}
 </script>
 </body>
 </html>
