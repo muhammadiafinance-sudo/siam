@@ -189,6 +189,10 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 .seg button{flex:1;border:0;background:transparent;padding:10px 6px;border-radius:8px;font-weight:600;font-size:14px;color:var(--muted);cursor:pointer}
 .seg button.on{background:#fff;color:var(--purple);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .tx-a.neu{color:var(--blue)}
+#syncBox .f{margin-bottom:8px}
+.sync-st{font-size:14px;margin-bottom:10px;line-height:1.5}
+.sync-st .ok{color:var(--green);font-weight:600}.sync-st .err{color:var(--red);font-weight:600}
+.linkbtn{background:none;border:0;color:var(--blue);font-size:13px;cursor:pointer;padding:6px 0;font-weight:600}
 .actgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
 .actgrid .btn{padding:11px 8px}
 #tab-history .cards .card:last-child{grid-column:1/-1}
@@ -377,6 +381,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
     <div class="row" style="margin:0"><input type="number" step="0.01" id="rateInput" style="flex:1"><button class="btn btn-p" onclick="saveRate()">Save</button></div></div>
   <div class="box"><div class="st">Balance Privacy</div>
     <label class="chk" style="background:#f6f7f9;border-color:var(--line);color:var(--text)"><input type="checkbox" id="hideBalInput" onchange="saveHideBal()"> Hide balances</label></div>
+  <div class="box"><div class="st">☁️ Online Sync</div><div id="syncBox"></div></div>
   <div class="box"><div class="st">💾 Backup</div>
     <div class="row" style="margin:0"><button class="btn btn-p" style="flex:1" onclick="exportData()">⬇️ Download</button><button class="btn btn-o" style="flex:1" onclick="$('importFile').click()">⬆️ Restore</button></div></div>
   <div class="box"><div class="st red">Reset App</div>
@@ -392,6 +397,8 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 
 <div class="toast" id="toast"></div>
 
+<script src="firebase-config.js"></script>
+<script src="vendor/firebase.js"></script>
 <script>
 const KEY='remittance_tracker_v1';
 const isNative=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
@@ -399,6 +406,7 @@ if(isNative)document.documentElement.classList.add('native');
 const $=id=>document.getElementById(id);
 let db={accounts:[],txns:[],rate:2.5,openCash:0,version:4};
 let curAcc=null,txnType='credit',editingAcc=null,rcvId=null;
+let fbAuth=null,fbFs=null,fbUser=null,fbUnsub=null,pushTimer=null,lastRemote=null,syncState='off',syncErr='',lastSync=null;
 
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const r2=n=>Math.round((n||0)*100)/100;
@@ -420,7 +428,8 @@ const balHtml=n=>balHidden()?'<span class="masked">৳ •••••</span>':t
 const byTime=(a,b)=>a.date===b.date?(a.created||0)-(b.created||0):(a.date<b.date?-1:1);
 
 /* ---------- storage ---------- */
-function save(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){toast('Could not save!');}}
+function saveLocal(){try{localStorage.setItem(KEY,JSON.stringify(db));}catch(e){toast('Could not save!');}}
+function save(){saveLocal();queuePush();}
 function load(){try{const d=JSON.parse(localStorage.getItem(KEY));if(d&&d.accounts)db=Object.assign({accounts:[],txns:[],rate:2.5,openCash:0},d);}catch(e){}migrate();}
 function migrate(){
   const v=db.version||1;if(v>=4)return;
@@ -621,8 +630,8 @@ function openAccModal(acc){
 function saveAccount(){
   const name=$('aName').value.trim();if(!name)return toast('Enter account name');
   const data={name,number:$('aNum').value.trim(),bank:$('aBank').value.trim()};
-  if(editingAcc){if(!$('aOpen').disabled)data.opening=+$('aOpen').value||0;Object.assign(editingAcc,data);toast('Account updated');}
-  else{db.accounts.push(Object.assign(data,{id:uid(),opening:+$('aOpen').value||0,created:today()}));toast('Account added');}
+  if(editingAcc){if(!$('aOpen').disabled)data.opening=+$('aOpen').value||0;data.upd=Date.now();Object.assign(editingAcc,data);toast('Account updated');}
+  else{db.accounts.push(Object.assign(data,{id:uid(),opening:+$('aOpen').value||0,created:today(),ts:Date.now()}));toast('Account added');}
   save();closeModal('accModal');render();
 }
 function editAccount(){openAccModal(accOf(curAcc));}
@@ -630,7 +639,7 @@ function deleteAccount(){
   const a=accOf(curAcc);
   if(db.txns.some(t=>t.accId===curAcc||t.toAcc===curAcc))return toast('Account has transactions — cannot delete');
   if(!confirm(`Delete empty account "${a.name}"?`))return;
-  db.accounts=db.accounts.filter(x=>x.id!==curAcc);save();toast('Account deleted');goHome();
+  db.accounts=db.accounts.filter(x=>x.id!==curAcc);db.deleted=(db.deleted||[]).concat(curAcc);save();toast('Account deleted');goHome();
 }
 
 /* ---------- transactions ---------- */
@@ -723,8 +732,8 @@ function toggleMenu(e){e.stopPropagation();$('accMenu').classList.remove('show')
 function toggleAccMenu(e){e.stopPropagation();$('menu').classList.remove('show');$('accMenu').classList.toggle('show');}
 function closeMenu(){$('menu').classList.remove('show');$('accMenu').classList.remove('show');}
 document.addEventListener('click',e=>{if(!e.target.closest('.menu'))closeMenu();});
-function openSettings(){closeMenu();$('rateInput').value=db.rate;$('hideBalInput').checked=db.hideBal!==false;$('setModal').classList.add('show');}
-function saveRate(){const r=parseFloat($('rateInput').value);if(isNaN(r)||r<0)return toast('Invalid rate');db.rate=r;save();render();toast('Rate saved');}
+function openSettings(){closeMenu();$('rateInput').value=db.rate;$('hideBalInput').checked=db.hideBal!==false;renderSync();$('setModal').classList.add('show');}
+function saveRate(){const r=parseFloat($('rateInput').value);if(isNaN(r)||r<0)return toast('Invalid rate');db.rate=r;db.setUpd=Date.now();save();render();toast('Rate saved');}
 async function exportData(){
   closeMenu();
   if(isNative){
@@ -746,9 +755,9 @@ function importData(e){
   r.readAsText(f);e.target.value='';
 }
 function clearAll(){
-  if(!confirm('Erase ALL accounts and transactions? Download a backup first!'))return;
+  if(!confirm('Erase ALL accounts and transactions'+(fbUser?' on every device synced to this login':'')+'? Download a backup first!'))return;
   if(prompt('Type ERASE to confirm')!=='ERASE')return toast('Cancelled');
-  db={accounts:[],txns:[],rate:db.rate,openCash:0,version:4,hideBal:db.hideBal};save();closeModal('setModal');goHome();toast('All data erased');
+  db={accounts:[],txns:[],rate:db.rate,openCash:0,version:4,hideBal:db.hideBal,deleted:[],resetAt:Date.now(),setUpd:db.setUpd||0};save();closeModal('setModal');goHome();toast('All data erased');
 }
 
 /* ---------- UI wiring ---------- */
@@ -770,7 +779,92 @@ $('accSearch').oninput=renderAccounts;
 /* scale up on phones so the app looks like a normal-size mobile app */
 function fitMobile(){const w=window.innerWidth,z=w<768?Math.min(1.6,Math.max(1,w/410)):1;const r=document.documentElement;r.style.zoom=z;r.style.setProperty("--vh",(window.innerHeight/z/100)+"px");}
 fitMobile();window.addEventListener("resize",fitMobile);
-load();render();
+load();render();initSync();
+
+/* ---------- online sync (Firebase) ---------- */
+// Whole data set lives in one Firestore document: users/{uid} {data: JSON}.
+// Devices merge entry by entry (union by id), so nothing is lost when two phones edit offline.
+const EMPTY={accounts:[],txns:[]};
+function mergeDb(a,b){
+  b=b||EMPTY;
+  const resetAt=Math.max(a.resetAt||0,b.resetAt||0);
+  const dead=new Set([...(a.deleted||[]),...(b.deleted||[])]);
+  const accs=new Map();
+  [...(a.accounts||[]),...(b.accounts||[])].forEach(x=>{const o=accs.get(x.id);if(!o||(x.upd||x.ts||0)>(o.upd||o.ts||0))accs.set(x.id,x);});
+  const txs=new Map();
+  [...(a.txns||[]),...(b.txns||[])].forEach(t=>{const o=txs.get(t.id);if(!o||(o.incStatus==='pending'&&t.incStatus==='received'))txs.set(t.id,t);});
+  const set=(b.setUpd||0)>(a.setUpd||0)?b:a;
+  const byKey=(k)=>(x,y)=>((x[k]||0)-(y[k]||0))||(x.id<y.id?-1:x.id>y.id?1:0);
+  return {
+    accounts:[...accs.values()].filter(x=>!dead.has(x.id)&&(x.ts||0)>=resetAt).sort(byKey('ts')),
+    txns:[...txs.values()].filter(t=>(t.created||0)>=resetAt).sort(byKey('created')),
+    rate:set.rate!=null?set.rate:2.5,setUpd:set.setUpd||0,deleted:[...dead].sort(),resetAt,version:4,openCash:0
+  };
+}
+const syncJSON=x=>JSON.stringify(mergeDb(x,x));   // canonical form (excludes per-device hideBal)
+function syncRef(){return FB.doc(fbFs,'users',fbUser.uid);}
+function initSync(){
+  if(!window.FIREBASE_CONFIG||!window.FB){syncState='off';return;}
+  try{
+    const app=FB.initializeApp(window.FIREBASE_CONFIG);fbAuth=FB.getAuth(app);fbFs=FB.getFirestore(app);
+    FB.setPersistence(fbAuth,FB.browserLocalPersistence).catch(()=>{});
+    FB.onAuthStateChanged(fbAuth,u=>{
+      if(fbUnsub){fbUnsub();fbUnsub=null;}
+      fbUser=u;lastRemote=null;syncState=u?'syncing':'out';renderSync();
+      if(u)startSync();
+    });
+  }catch(e){syncState='error';syncErr=e.message;}
+}
+function startSync(){
+  fbUnsub=FB.onSnapshot(syncRef(),snap=>{
+    let remote=null;
+    if(snap.exists()){try{remote=JSON.parse(snap.data().data);}catch(e){}}
+    lastRemote=remote;
+    const merged=mergeDb(db,remote);merged.hideBal=db.hideBal;
+    if(syncJSON(merged)!==syncJSON(db)){db=merged;saveLocal();render();}
+    if(!remote||syncJSON(remote)!==syncJSON(db))pushNow();
+    else if(!snap.metadata.hasPendingWrites){syncState='ok';lastSync=new Date();renderSync();}
+  },err=>{syncState='error';syncErr=err.message;renderSync();});
+}
+function queuePush(){if(!fbUser)return;clearTimeout(pushTimer);pushTimer=setTimeout(pushNow,800);}
+function pushNow(){
+  if(!fbUser)return;clearTimeout(pushTimer);
+  if(lastRemote){const m=mergeDb(db,lastRemote);m.hideBal=db.hideBal;if(syncJSON(m)!==syncJSON(db)){db=m;saveLocal();render();}}
+  syncState='syncing';renderSync();
+  FB.setDoc(syncRef(),{data:syncJSON(db),updated:FB.serverTimestamp()})
+    .then(()=>{syncState='ok';lastSync=new Date();renderSync();})
+    .catch(e=>{syncState='error';syncErr=e.message;renderSync();});
+}
+function renderSync(){
+  const box=$('syncBox');if(!box)return;
+  if(!fbAuth){box.innerHTML='<div class="sync-st muted">'+(syncState==='error'?'⚠ '+esc(syncErr):'Not set up')+'</div>';return;}
+  if(!fbUser){box.innerHTML=`<div class="f"><input type="email" id="syEmail" placeholder="Email" autocomplete="email"></div>
+    <div class="f"><input type="password" id="syPass" placeholder="Password" autocomplete="current-password"></div>
+    <div class="row" style="margin:0"><button class="btn btn-p" style="flex:1" onclick="syncLogin(false)">Sign in</button><button class="btn btn-o" style="flex:1" onclick="syncLogin(true)">Create account</button></div>
+    <button class="linkbtn" onclick="syncReset()">Forgot password?</button>`;return;}
+  const st=syncState==='ok'?`<span class="ok">✓ Synced</span>${lastSync?' · '+lastSync.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):''}`:
+    syncState==='error'?`<span class="err">⚠ ${esc(syncErr)}</span>`:'Syncing…';
+  box.innerHTML=`<div class="sync-st">${esc(fbUser.email)}<br>${st}</div><button class="btn btn-o btn-sm" onclick="syncLogout()">Sign out</button>`;
+}
+const authMsg=e=>({'auth/invalid-credential':'Wrong email or password','auth/wrong-password':'Wrong email or password','auth/user-not-found':'No account with this email',
+  'auth/email-already-in-use':'This email already has an account','auth/weak-password':'Password must be at least 6 characters','auth/invalid-email':'Invalid email',
+  'auth/network-request-failed':'No internet connection'}[e.code]||e.message);
+async function syncLogin(create){
+  const em=$('syEmail').value.trim(),pw=$('syPass').value;if(!em||!pw)return toast('Enter email and password');
+  try{await (create?FB.createUserWithEmailAndPassword:FB.signInWithEmailAndPassword)(fbAuth,em,pw);toast(create?'Account created · syncing':'Signed in · syncing');}
+  catch(e){toast(authMsg(e));}
+}
+async function syncReset(){
+  const em=$('syEmail').value.trim();if(!em)return toast('Enter your email first');
+  try{await FB.sendPasswordResetEmail(fbAuth,em);toast('Password reset email sent');}catch(e){toast(authMsg(e));}
+}
+async function syncLogout(){
+  const wipe=confirm('Sign out. Also remove the data from this device?\n(It stays safe online.)');
+  if(fbUnsub){fbUnsub();fbUnsub=null;}clearTimeout(pushTimer);
+  await FB.signOut(fbAuth);
+  if(wipe){db={accounts:[],txns:[],rate:db.rate,openCash:0,version:4,hideBal:db.hideBal};saveLocal();goHome();}
+  toast('Signed out');
+}
 
 /* ---------- installable app (PWA) ---------- */
 let deferredPrompt=null;

@@ -4,17 +4,20 @@
   "private": true,
   "description": "Sunnah - web app + Android app (Capacitor)",
   "scripts": {
-    "build:www": "node scripts/build-www.js"
+    "build:www": "node scripts/build-www.js",
+    "build:firebase": "esbuild src/firebase-entry.js --bundle --minify --format=iife --target=es2019 --outfile=vendor/firebase.js"
   },
   "dependencies": {
     "@capacitor/android": "8.6.2",
     "@capacitor/app": "8.1.2",
     "@capacitor/core": "8.6.2",
     "@capacitor/filesystem": "8.1.5",
-    "@capacitor/share": "8.0.3"
+    "@capacitor/share": "8.0.3",
+    "firebase": "^13.2.0"
   },
   "devDependencies": {
     "@capacitor/assets": "4.0.0",
-    "@capacitor/cli": "8.6.2"
+    "@capacitor/cli": "8.6.2",
+    "esbuild": "^0.28.2"
   }
 }
