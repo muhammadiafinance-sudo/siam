@@ -293,10 +293,10 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 .tx-a.neu{color:var(--blue)}
 .cv-stage.drag .vc{transition:none}
 /* balance reveal / hide */
-@keyframes balIn{from{opacity:0;filter:blur(8px);transform:translateY(6px) scale(.96)}to{opacity:1;filter:none;transform:none}}
-@keyframes balOut{to{opacity:0;filter:blur(8px);transform:translateY(-4px) scale(.96)}}
-.bal-in{display:inline-block;animation:balIn .55s cubic-bezier(.2,.8,.2,1) both}
-.bal-out{display:inline-block;animation:balOut .28s ease both}
+@keyframes balIn{from{opacity:0}to{opacity:1}}
+@keyframes balOut{to{opacity:0}}
+.bal-in{animation:balIn .15s ease-out both}
+.bal-out{animation:balOut .12s ease-in both}
 /* Pay Sunnah form slides open under its button */
 .slide{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .38s ease,opacity .3s ease,margin .38s ease;margin-bottom:0}
 .slide.open{grid-template-rows:1fr;opacity:1;margin-bottom:14px}
@@ -1056,9 +1056,9 @@ function showBal(k){
   clearTimeout(shownBal.get(k));
   shownBal.set(k,setTimeout(()=>{
     balEls(k).forEach(el=>{el.classList.remove('bal-in');el.classList.add('bal-out');});
-    setTimeout(()=>{shownBal.delete(k);render();balEls(k).forEach(el=>el.classList.add('bal-in'));},280);
+    setTimeout(()=>{shownBal.delete(k);render();balEls(k).forEach(el=>el.classList.add('bal-in'));},120);
   },10000));
-  render();balEls(k).forEach(el=>{el.classList.add('bal-in');countUp(el);});
+  render();balEls(k).forEach(el=>el.classList.add('bal-in'));
 }
 function hideBal(){if(!shownBal.size)return;shownBal.forEach(t=>clearTimeout(t));shownBal.clear();render();}
 // while hidden, tapping a balance reveals it instead of opening the item underneath
