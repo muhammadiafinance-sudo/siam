@@ -220,6 +220,39 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
   .stmt{border:0;box-shadow:none;border-radius:0}.st-tbl th{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   .st-tbl tr{page-break-inside:avoid}
 }
+/* ---------- account card carousel ---------- */
+.car{position:relative;margin:4px -16px 6px;padding:8px 0 4px;overflow:hidden;overflow:clip;
+  background:radial-gradient(120% 90% at 50% 40%,#eef1ff 0%,rgba(238,241,255,0) 70%)}
+.cv-stage{position:relative;width:100%;max-width:680px;margin:0 auto;aspect-ratio:1.95;perspective:1100px;touch-action:pan-y}
+.vc{position:absolute;left:50%;top:5%;width:78%;aspect-ratio:1.586;border-radius:20px;color:#fff;overflow:hidden;cursor:pointer;
+  transition:transform .45s cubic-bezier(.2,.8,.2,1),filter .45s,opacity .45s;will-change:transform;
+  box-shadow:0 18px 40px -12px rgba(20,30,90,.55),inset 0 0 0 1px rgba(255,255,255,.14);user-select:none;-webkit-user-select:none}
+.vc .wv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.vc .in{position:absolute;inset:0;padding:6.5% 7%;display:flex;flex-direction:column}
+.vc-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.vc-bank{display:flex;align-items:center;gap:10px;font-weight:700;font-size:clamp(14px,4.4vw,21px);letter-spacing:.2px;min-width:0}
+.vc-bank span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vc-bank svg{flex:none;width:clamp(26px,7vw,38px);height:auto}
+.vc-type{font-size:clamp(11px,3.4vw,16px);font-weight:600;opacity:.95;white-space:nowrap}
+.vc-mid{display:flex;align-items:center;gap:6%;margin-top:7%}
+.vc-mid svg:first-child{width:17%;height:auto;flex:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
+.vc-mid svg:last-child{width:5.5%;height:auto;flex:none;opacity:.95}
+.vc-num{margin-top:auto;font-size:clamp(15px,5.2vw,27px);font-weight:600;letter-spacing:.14em;word-spacing:.35em;white-space:nowrap;
+  font-family:"OCR A Std","Courier New",ui-monospace,monospace;text-shadow:0 1px 2px rgba(0,0,0,.35)}
+.vc-bot{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;margin-top:5%}
+.vc-holder{font-size:clamp(11px,3.4vw,17px);font-weight:600;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.vc-bal{display:flex;align-items:center;gap:8px;flex:none}
+.vc-bal small{font-size:clamp(7px,2vw,10px);line-height:1.15;letter-spacing:.06em;text-transform:uppercase;opacity:.85}
+.vc-bal b{font-size:clamp(14px,4.4vw,22px);font-weight:700;white-space:nowrap}
+.vc-pend{position:absolute;right:7%;top:24%;font-size:clamp(9px,2.6vw,12px);background:rgba(255,255,255,.18);border-radius:10px;padding:3px 9px;font-weight:600;backdrop-filter:blur(4px)}
+.car-btn{position:absolute;top:calc(50% - 26px);z-index:30;width:46px;height:46px;border-radius:50%;border:0;background:#fff;color:var(--navy);
+  box-shadow:0 6px 18px rgba(20,30,90,.18);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.car-btn:disabled{opacity:0;pointer-events:none}
+.car-btn.l{left:10px}.car-btn.r{right:10px}
+.car-dots{display:flex;justify-content:center;gap:9px;margin:8px 0 2px}
+.car-dots button{width:9px;height:9px;border-radius:50%;border:0;background:#c3c8d6;padding:0;cursor:pointer;transition:all .25s}
+.car-dots button.on{background:var(--blue);width:22px;border-radius:5px}
+@media(min-width:768px){.car{margin:4px 0 6px;border-radius:18px}.car-btn.l{left:18px}.car-btn.r{right:18px}}
 /* bank-card style account tiles */
 .bcard{position:relative;aspect-ratio:1.586;border-radius:16px;padding:16px 18px;color:#fff;cursor:pointer;overflow:hidden;
   box-shadow:0 6px 16px rgba(0,0,0,.18);display:flex;flex-direction:column;justify-content:space-between;transition:transform .15s}
@@ -349,7 +382,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
         <input class="search" id="accSearch" placeholder="Search account...">
         <button class="btn btn-p" onclick="openAccModal()">+ Add Account</button>
       </div>
-      <div id="accList" class="grid-list"></div>
+      <div id="accList"></div>
     </div>
 
     <div id="tab-sunnah" style="display:none"><div class="split"><div>
@@ -678,19 +711,58 @@ function render(){
   if($('pendModal').classList.contains('show'))renderPending();
 }
 
+let carIdx=0;
+const ICON_BANK='<svg viewBox="0 0 40 36" fill="#fff"><path d="M20 1 2 9.5V12h36V9.5z"/><rect x="5" y="14" width="4" height="14" rx="1"/><rect x="13" y="14" width="4" height="14" rx="1"/><rect x="23" y="14" width="4" height="14" rx="1"/><rect x="31" y="14" width="4" height="14" rx="1"/><rect x="2" y="30" width="36" height="5" rx="1"/></svg>';
+const ICON_CHIP='<svg viewBox="0 0 64 48"><defs><linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f9e7a6"/><stop offset=".5" stop-color="#d9b25a"/><stop offset="1" stop-color="#f2d68a"/></linearGradient></defs><rect x="1" y="1" width="62" height="46" rx="8" fill="url(#cg)" stroke="#b8923f" stroke-width="1"/><g fill="none" stroke="#9c7a30" stroke-width="1.4" opacity=".75"><rect x="22" y="13" width="20" height="22" rx="4"/><path d="M1 17h21M1 31h21M42 17h21M42 31h21M32 1v12M32 35v12M22 24H8M42 24h14"/></g></svg>';
+const ICON_NFC='<svg viewBox="0 0 24 32" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M4 10c2.5 3.5 2.5 8.5 0 12"/><path d="M10 6c4.5 6 4.5 14 0 20"/><path d="M16 2c6.5 8.5 6.5 19.5 0 28"/></svg>';
+const WAVES='<svg class="wv" viewBox="0 0 400 252" preserveAspectRatio="none"><path d="M180 0C230 70 200 150 300 190S400 252 400 252V0z" fill="rgba(255,255,255,.07)"/><path d="M260 0c10 60 40 90 80 110s60 30 60 30V0z" fill="rgba(255,255,255,.08)"/><path d="M0 170c90-40 170 30 260 0s140-60 140-60v142H0z" fill="rgba(0,0,0,.12)"/></svg>';
+function vcardHTML(a,i){
+  const s=accStats(a.id),k='acc:'+a.id;
+  return `<div class="vc" data-i="${i}" style="background:${cardBg(a)}" onclick="cardTap(${i},'${a.id}')">
+    ${WAVES}<div class="in">
+      <div class="vc-top"><div class="vc-bank">${ICON_BANK}<span>${esc(a.bank||a.name)}</span></div><div class="vc-type">Debit Card</div></div>
+      <div class="vc-mid">${ICON_CHIP}${ICON_NFC}</div>
+      <div class="vc-num">${esc(cardNum(a.number))}</div>
+      <div class="vc-bot"><div class="vc-holder">${esc(a.name)}</div>
+        <div class="vc-bal tapbal" data-k="${k}"><small>Avail<br>Bal</small><b>${balHtml(s.bal,k)}</b></div></div>
+    </div>${s.nP?`<div class="vc-pend">Pending ${tk(s.iP)}</div>`:''}
+  </div>`;
+}
+const CHEV=d=>`<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
 function renderAccounts(){
   const q=$('accSearch').value.toLowerCase();
   const list=db.accounts.filter(a=>(a.name+' '+(a.number||'')+' '+(a.bank||'')).toLowerCase().includes(q));
   if(!db.accounts.length){$('accList').innerHTML='<div class="empty">No accounts yet.</div>';return;}
   if(!list.length){$('accList').innerHTML='<div class="empty">No matching account.</div>';return;}
-  $('accList').innerHTML=list.map(a=>{const s=accStats(a.id),k='acc:'+a.id;return `
-    <div class="bcard" style="background:${cardBg(a)}" onclick="openAccount('${a.id}')">
-      <div class="bc-top"><div><div class="bc-bank">${esc(a.bank||a.name)}</div>${a.bank?`<div class="bc-name">${esc(a.name)}</div>`:''}</div><div class="bc-type">DEBIT</div></div>
-      <div class="bc-mid"><div class="bc-chip"></div><div class="bc-wave">)))</div></div>
-      <div class="bc-num">${esc(cardNum(a.number))}</div>
-      <div class="bc-bot"><div class="tapbal" data-k="${k}"><div class="bc-lbl">Available balance</div><div class="bc-bal">${balHtml(s.bal,k)}</div></div>
-        ${s.nP?`<div class="bc-pend">Pending ${tk(s.iP)}</div>`:''}</div>
-    </div>`;}).join('');
+  carIdx=Math.max(0,Math.min(carIdx,list.length-1));
+  $('accList').innerHTML=`<div class="car">
+    <div class="cv-stage" id="cvStage">${list.map(vcardHTML).join('')}</div>
+    <button class="car-btn l" id="carL" onclick="carGo(-1)" title="Previous">${CHEV('M15 18l-6-6 6-6')}</button>
+    <button class="car-btn r" id="carR" onclick="carGo(1)" title="Next">${CHEV('M9 6l6 6-6 6')}</button>
+  </div>
+  <div class="car-dots" id="carDots">${list.length>1?list.map((a,i)=>`<button onclick="carTo(${i})" title="${esc(a.name)}"></button>`).join(''):''}</div>`;
+  carApply();carSwipe();
+}
+// position every card relative to the selected one (coverflow)
+function carApply(){
+  const cards=[...document.querySelectorAll('#cvStage .vc')],n=cards.length;
+  cards.forEach((c,i)=>{const off=i-carIdx,ab=Math.abs(off);
+    c.style.transform=`translateX(calc(-50% + ${off*58}%)) scale(${Math.max(.6,1-ab*.2)}) rotateY(${-Math.sign(off)*Math.min(ab,2)*14}deg)`;
+    c.style.zIndex=20-ab;c.style.filter=ab?`blur(${Math.min(ab,2)*1.6}px) saturate(.9)`:'none';
+    c.style.opacity=ab>2?0:1;c.style.pointerEvents=ab>2?'none':'';});
+  const l=$('carL'),r=$('carR');if(l){l.disabled=carIdx<=0;r.disabled=carIdx>=n-1;}
+  document.querySelectorAll('#carDots button').forEach((b,i)=>b.classList.toggle('on',i===carIdx));
+}
+function carTo(i){const n=document.querySelectorAll('#cvStage .vc').length;carIdx=Math.max(0,Math.min(n-1,i));carApply();}
+function carGo(d){carTo(carIdx+d);}
+function cardTap(i,id){if(i===carIdx)openAccount(id);else carTo(i);}
+function carSwipe(){
+  const st=$('cvStage');if(!st)return;let x0=null,moved=false;
+  st.addEventListener('pointerdown',e=>{x0=e.clientX;moved=false;});
+  st.addEventListener('pointermove',e=>{if(x0!=null&&Math.abs(e.clientX-x0)>8)moved=true;});
+  st.addEventListener('pointerup',e=>{if(x0==null)return;const dx=e.clientX-x0;x0=null;
+    if(Math.abs(dx)>40)carGo(dx<0?1:-1);});
+  st.addEventListener('click',e=>{if(moved){e.stopPropagation();e.preventDefault();moved=false;}},true);
 }
 
 function evRow(e,withAcc){
