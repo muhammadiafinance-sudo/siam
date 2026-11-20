@@ -291,6 +291,13 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 .seg button{flex:1;white-space:nowrap;border:0;background:transparent;padding:10px 6px;border-radius:8px;font-weight:600;font-size:14px;color:var(--muted);cursor:pointer}
 .seg button.on{background:#fff;color:var(--purple);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .tx-a.neu{color:var(--blue)}
+/* Pay Sunnah form slides open under its button */
+.slide{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .38s ease,opacity .3s ease,margin .38s ease;margin-bottom:0}
+.slide.open{grid-template-rows:1fr;opacity:1;margin-bottom:14px}
+.slide>.modal{min-height:0;overflow:hidden;max-height:none;max-width:none;border-radius:14px;border:1px solid var(--line);box-shadow:0 6px 18px rgba(16,32,64,.08);padding:0 16px}
+.slide.open>.modal{padding:16px}
+.slide>.modal h3 .x{display:none}
+#payBtn.on{box-shadow:inset 0 0 0 2px rgba(255,255,255,.6)}
 .upd-bar{background:#e7f1fb;border:1px solid #b9d7f3;border-radius:12px;padding:10px 12px 10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px}
 .upd-bar b{color:var(--navy)}
 @media print{.upd-bar{display:none!important}}
@@ -392,9 +399,10 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
         <div class="sub2"><div>Received<b id="sGot">0</b></div><div>Paid<b id="sPaid">0</b></div></div>
       </div>
       <div class="row">
-        <button class="btn btn-pu" style="flex:1" onclick="openPay()">Pay Sunnah</button>
+        <button class="btn btn-pu" style="flex:1" id="payBtn" onclick="togglePay()">Pay Sunnah</button>
         <button class="btn btn-o" style="flex:1" onclick="openTxn('cashin')">+ Add</button>
       </div>
+      <div id="payInline" class="slide"></div>
       </div><div>
       <div class="row stmt-period">
         <input type="date" id="cFrom" style="flex:1;min-width:130px">
@@ -481,7 +489,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 
 <!-- Txn modal -->
 <div class="modal-bg" id="txnModal"><div class="modal">
-  <h3><span id="txnTitle">Remittance In</span><button class="x" onclick="closeModal('txnModal')">×</button></h3>
+  <h3><span id="txnTitle">Remittance In</span><button class="x" onclick="closeTxn()">×</button></h3>
   <div class="f"><label>Date *</label><input type="date" id="tDate"></div>
   <div class="f"><label>Amount (৳) *</label><input type="number" id="tAmt" placeholder="0" oninput="txnHint()"></div>
   <div class="f" id="tPendWrap"><label class="chk"><input type="checkbox" id="tPend" onchange="txnHint()"> Incentive not received yet (pending)</label></div>
@@ -501,7 +509,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
   <div class="f" id="tAccWrap"><label>From account</label><select id="tAcc" onchange="fillTo();txnHint()"></select></div>
   <div class="f" id="tToWrap"><label>To</label><select id="tTo" onchange="txnHint()"></select></div>
   <div class="f"><label id="tNoteLbl">Note</label><input id="tNote"></div>
-  <div class="mbtns"><button class="btn btn-o" onclick="closeModal('txnModal')">Cancel</button><button class="btn btn-p" id="tSave" onclick="saveTxn()">Save</button></div>
+  <div class="mbtns"><button class="btn btn-o" onclick="closeTxn()">Cancel</button><button class="btn btn-p" id="tSave" onclick="saveTxn()">Save</button></div>
 </div></div>
 
 <!-- Pending list modal -->
@@ -921,7 +929,7 @@ function setMethod(m){
 }
 const hidePayFields=()=>{$('tBankWrap').style.display='none';$('tMobWrap').style.display='none';$('tNoteLbl').textContent='Note';};
 function openTxn(type){
-  txnType=type;
+  unmountInline();txnType=type;
   $('tPendWrap').style.display=type==='credit'?'block':'none';
   $('tMethodWrap').style.display='none';$('tAccWrap').style.display='none';$('tToWrap').style.display='none';hidePayFields();
   $('txnTitle').textContent=TXN_UI[type].title;$('tSave').className=TXN_UI[type].cls;
@@ -943,6 +951,7 @@ function fillTo(){
   if([...$('tTo').options].some(o=>o.value===cur))$('tTo').value=cur;
 }
 function openTransfer(accId){
+  unmountInline();
   if(db.accounts.length<2)return toast('Add another account first');
   txnType='move';hidePayFields();
   $('tPendWrap').style.display='none';$('tMethodWrap').style.display='none';
@@ -951,7 +960,25 @@ function openTransfer(accId){
   $('txnTitle').textContent='Fund Transfer';$('tSave').className='btn btn-pu';
   resetTxnForm();
 }
+// The Pay Sunnah form uses the same fields as the popup, moved inline under the button.
+let inlineTxn=false;
+const txnBox=()=>$('payInline').querySelector('.modal')||document.querySelector('#txnModal .modal');
+function unmountInline(){if(!inlineTxn)return;$('txnModal').appendChild(txnBox());$('payInline').classList.remove('open');$('payBtn').classList.remove('on');inlineTxn=false;}
+function closeTxn(){
+  if(!inlineTxn)return closeModal('txnModal');
+  $('payInline').classList.remove('open');$('payBtn').classList.remove('on');inlineTxn=false;
+  setTimeout(()=>{if(!inlineTxn&&$('payInline').querySelector('.modal'))$('txnModal').appendChild(txnBox());},400);
+}
+function togglePay(){if(inlineTxn)return closeTxn();openPay();}
 function resetTxnForm(){
+  if(txnType==='pay'){
+    $('tDate').value=today();$('tAmt').value='';$('tNote').value='';$('tPend').checked=false;
+    $('payInline').appendChild(txnBox());inlineTxn=true;$('payBtn').classList.add('on');
+    requestAnimationFrame(()=>requestAnimationFrame(()=>$('payInline').classList.add('open')));
+    txnHint();setTimeout(()=>{$('tAmt').focus({preventScroll:true});$('payInline').scrollIntoView({behavior:'smooth',block:'nearest'});},380);
+    return;
+  }
+  unmountInline();
   $('tDate').value=today();$('tAmt').value='';$('tNote').value='';$('tPend').checked=false;
   $('txnModal').classList.add('show');txnHint();setTimeout(()=>$('tAmt').focus(),100);
 }
@@ -988,7 +1015,7 @@ function saveTxn(){
     if(amt>sunStats().bal&&!confirm('Amount is more than Sunnah balance. Save anyway?'))return;
   }
   if(!confirm('Save this entry? It cannot be deleted later.'))return;
-  db.txns.push(t);save();closeModal('txnModal');render();
+  db.txns.push(t);save();closeTxn();render();
   toast(t.type==='move'?'Transferred to '+accName(t.toAcc):{credit:t.incStatus==='pending'?'Remittance added · incentive pending':'Remittance + incentive added',receive:'Fund received',withdraw:'Cash withdrawn',pay:'Paid to Sunnah',cashin:'Added to Sunnah'}[txnType]);
 }
 
@@ -1037,6 +1064,7 @@ function clearAll(){
 function closeModal(id){$(id).classList.remove('show');}
 document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show');}));
 function switchTab(t){
+  unmountInline();
   document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
   ['accounts','sunnah','history'].forEach(x=>$('tab-'+x).style.display=x===t?'block':'none');
   $('pageTitle').textContent={accounts:'Accounts',sunnah:'Sunnah',history:'History'}[t];
@@ -1283,6 +1311,7 @@ if(isNative){
   const A=Capacitor.Plugins.App;
   if(A)A.addListener('backButton',()=>{
     if($('lock').classList.contains('show')||$('auth').classList.contains('show'))return A.minimizeApp?A.minimizeApp():A.exitApp();
+    if(inlineTxn)return closeTxn();
     const open=[...document.querySelectorAll('.modal-bg.show')];
     if(open.length)return open.forEach(m=>m.classList.remove('show'));
     if($('side').classList.contains('open'))return closeSide();
