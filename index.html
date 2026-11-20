@@ -291,6 +291,16 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 .seg button{flex:1;white-space:nowrap;border:0;background:transparent;padding:10px 6px;border-radius:8px;font-weight:600;font-size:14px;color:var(--muted);cursor:pointer}
 .seg button.on{background:#fff;color:var(--purple);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .tx-a.neu{color:var(--blue)}
+/* type-ahead suggestions */
+.sg-wrap{position:relative}
+.sg{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:80;background:#fff;border:1px solid var(--line);border-radius:10px;
+  box-shadow:0 10px 24px rgba(16,32,64,.16);overflow:hidden;max-height:260px;overflow-y:auto;display:none}
+.sg.show{display:block}
+.sg button{display:block;width:100%;text-align:left;background:none;border:0;border-top:1px solid #f0f2f5;padding:11px 12px;font-size:15px;color:var(--text);cursor:pointer}
+.sg button:first-child{border-top:0}
+.sg button:hover,.sg button.act{background:#eef4fc}
+.sg button b{color:var(--blue)}
+.sg button small{display:block;font-size:12px;color:var(--muted);margin-top:2px}
 #tMethodWrap .seg{display:grid;grid-template-columns:1fr 1fr}
 @media(min-width:600px){#tMethodWrap .seg{grid-template-columns:repeat(4,1fr)}}
 .pf-hero{background:linear-gradient(160deg,#1c7c3b,#0f4d24)}
@@ -310,7 +320,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 .slide{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .38s ease,opacity .3s ease,margin .38s ease;margin-bottom:0}
 .slide.open{grid-template-rows:1fr;opacity:1;margin-bottom:14px}
 .slide>.modal{min-height:0;overflow:hidden;max-height:none;max-width:none;border-radius:14px;border:1px solid var(--line);box-shadow:0 6px 18px rgba(16,32,64,.08);padding:0 16px}
-.slide.open>.modal{padding:16px}
+.slide.open>.modal{padding:16px;overflow:visible}
 .slide>.modal h3 .x{display:none}
 #payBtn.on{box-shadow:inset 0 0 0 2px rgba(255,255,255,.6)}
 .upd-bar{background:#e7f1fb;border:1px solid #b9d7f3;border-radius:12px;padding:10px 12px 10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px}
@@ -531,9 +541,8 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
   <div id="tBankWrap">
     <div class="f"><label>Account Holder *</label><input id="pHolder" autocomplete="off"></div>
     <div class="f"><label>Account Number *</label><input id="pBankAcc" inputmode="numeric" autocomplete="off"></div>
-    <div class="f"><label>Bank Name *</label><input id="pBankName" list="bankNames" autocomplete="off"></div>
+    <div class="f"><label>Bank Name *</label><input id="pBankName" autocomplete="off"></div>
   </div>
-  <datalist id="bankNames"></datalist>
   <div id="tMobWrap">
     <div class="f"><label>Mobile Banking Operator *</label><select id="pOp"><option value="">Select operator</option><option>bKash</option><option>Nagad</option><option>Rocket</option><option>Upay</option></select></div>
     <div class="f"><label>Account Number *</label><input id="pMobAcc" type="tel" inputmode="numeric" autocomplete="off"></div>
@@ -1009,7 +1018,6 @@ function openTxn(type){
 function openPay(method){
   txnType='pay';
   ['pHolder','pBankAcc','pBankName','pOp','pMobAcc'].forEach(id=>$(id).value='');
-  $('bankNames').innerHTML=[...new Set(db.txns.filter(t=>t.payTo&&t.payTo.bank).map(t=>t.payTo.bank).concat(db.accounts.map(a=>a.bank).filter(Boolean)))].map(b=>`<option value="${esc(b)}">`).join('');
   $('tPendWrap').style.display='none';$('tMethodWrap').style.display='block';$('tAccWrap').style.display='none';$('tToWrap').style.display='none';
   $('txnTitle').textContent='Pay Sunnah';$('tSave').className='btn btn-pu';
   resetTxnForm();setMethod(method||'cash');
@@ -1171,6 +1179,7 @@ function fitMobile(){const w=window.innerWidth,z=w<768?Math.min(1.6,Math.max(1,w
 fitMobile();window.addEventListener("resize",fitMobile);
 let lastNar=window.innerWidth<600;window.addEventListener('resize',()=>{const n=window.innerWidth<600;if(n!==lastNar){lastNar=n;renderSunnah();renderProfit();if(curAcc)renderStatement();}});
 load();render();initSync();if(db.pin&&db.pin.hash)lockApp();
+setTimeout(setupSuggest,0);
 setTimeout(checkUpdate,1500);
 
 /* ---------- online sync (Firebase) ---------- */
@@ -1338,6 +1347,58 @@ async function forgotPin(){
     if(!confirm('Not signed in. To reset the PIN, the data on this device will be removed.\n(Your online data stays safe — sign in again to get it back.)'))return;
     db={accounts:[],txns:[],rate:db.rate,openCash:0,version:4,hideBal:db.hideBal};saveLocal();hideLock();goHome();toast('Sign in to restore your data');
   }
+}
+
+/* ---------- type-ahead suggestions ---------- */
+// Each field suggests values typed before (most recent first); picking can also fill related fields.
+const BD_BANKS=['AB Bank','Agrani Bank','Al-Arafah Islami Bank','Bank Asia','BRAC Bank','City Bank','Dhaka Bank','Dutch-Bangla Bank (DBBL)','Eastern Bank (EBL)','EXIM Bank','First Security Islami Bank','HSBC','IFIC Bank','Islami Bank Bangladesh','Jamuna Bank','Janata Bank','Meghna Bank','Mercantile Bank','Midland Bank','Mutual Trust Bank','National Bank','NCC Bank','NRB Bank','One Bank','Premier Bank','Prime Bank','Pubali Bank','Rupali Bank','Shahjalal Islami Bank','Social Islami Bank','Sonali Bank','Southeast Bank','Standard Bank','Standard Chartered','Trust Bank','UCB (United Commercial Bank)','Union Bank','Uttara Bank'];
+const uniq=a=>{const seen=new Set(),o=[];a.filter(x=>x&&(typeof x==='string'||x.v)).forEach(x=>{const k=(x.v||x).toString().trim();if(k&&!seen.has(k.toLowerCase())){seen.add(k.toLowerCase());o.push(x.v?x:{v:k});}});return o;};
+const recentTx=()=>db.txns.slice().sort((a,b)=>(b.created||0)-(a.created||0));
+const payTos=m=>recentTx().filter(t=>t.type==='pay'&&t.method===m&&t.payTo);
+const SUGGEST={
+  tNote:()=>uniq(recentTx().map(t=>t.note)),
+  aName:()=>uniq(db.accounts.map(a=>a.name)),
+  aBank:()=>uniq(db.accounts.map(a=>a.bank).concat(payTos('bank').map(t=>t.payTo.bank),BD_BANKS)),
+  pBankName:()=>uniq(payTos('bank').map(t=>t.payTo.bank).concat(db.accounts.map(a=>a.bank),BD_BANKS)),
+  pHolder:()=>uniq(payTos('bank').map(t=>({v:t.payTo.holder,d:[t.payTo.acc&&'A/C '+t.payTo.acc,t.payTo.bank].filter(Boolean).join(' · '),p:t.payTo}))),
+  pBankAcc:()=>uniq(payTos('bank').map(t=>({v:t.payTo.acc,d:[t.payTo.holder,t.payTo.bank].filter(Boolean).join(' · '),p:t.payTo}))),
+  pMobAcc:()=>uniq(payTos('mobile').map(t=>({v:t.payTo.acc,d:t.payTo.op,p:t.payTo}))),
+  accSearch:()=>uniq(db.accounts.map(a=>a.name).concat(db.accounts.map(a=>a.bank))),
+};
+const SUGGEST_PICK={
+  pHolder:p=>{if(p.acc)$('pBankAcc').value=p.acc;if(p.bank)$('pBankName').value=p.bank;},
+  pBankAcc:p=>{if(p.holder)$('pHolder').value=p.holder;if(p.bank)$('pBankName').value=p.bank;},
+  pMobAcc:p=>{if(p.op)$('pOp').value=p.op;},
+  accSearch:()=>renderAccounts(),
+};
+function setupSuggest(){
+  Object.keys(SUGGEST).forEach(id=>{
+    const inp=$(id);if(!inp||inp.dataset.sg)return;inp.dataset.sg=1;inp.setAttribute('autocomplete','off');
+    const wrap=document.createElement('div');wrap.className='sg-wrap';inp.parentNode.insertBefore(wrap,inp);wrap.appendChild(inp);
+    const box=document.createElement('div');box.className='sg';wrap.appendChild(box);
+    let items=[],act=-1;
+    const hl=(v,q)=>{const i=v.toLowerCase().indexOf(q);return i<0||!q?esc(v):esc(v.slice(0,i))+'<b>'+esc(v.slice(i,i+q.length))+'</b>'+esc(v.slice(i+q.length));};
+    const show=()=>{
+      const q=inp.value.trim().toLowerCase();
+      items=SUGGEST[id]().filter(x=>!q||x.v.toLowerCase().includes(q)).filter(x=>x.v.toLowerCase()!==q)
+        .sort((a,b)=>q?(b.v.toLowerCase().startsWith(q)-a.v.toLowerCase().startsWith(q)):0).slice(0,6);
+      act=-1;
+      box.innerHTML=items.map((x,i)=>`<button type="button" data-i="${i}">${hl(x.v,q)}${x.d?`<small>${esc(x.d)}</small>`:''}</button>`).join('');
+      box.classList.toggle('show',items.length>0);
+    };
+    const pick=i=>{const x=items[i];if(!x)return;inp.value=x.v;box.classList.remove('show');if(SUGGEST_PICK[id])SUGGEST_PICK[id](x.p||{});inp.dispatchEvent(new Event('input'));};
+    inp.addEventListener('input',e=>{if(e.isTrusted)show();});
+    inp.addEventListener('focus',show);
+    inp.addEventListener('blur',()=>setTimeout(()=>box.classList.remove('show'),150));
+    inp.addEventListener('keydown',e=>{
+      if(!box.classList.contains('show'))return;
+      if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();act=(act+(e.key==='ArrowDown'?1:-1)+items.length)%items.length;[...box.children].forEach((b,i)=>b.classList.toggle('act',i===act));}
+      else if(e.key==='Enter'&&act>=0){e.preventDefault();pick(act);}
+      else if(e.key==='Escape')box.classList.remove('show');
+    });
+    box.addEventListener('mousedown',e=>e.preventDefault()); // keep focus so the tap registers
+    box.addEventListener('click',e=>{const b=e.target.closest('button');if(b)pick(+b.dataset.i);});
+  });
 }
 
 /* ---------- update notice ---------- */
