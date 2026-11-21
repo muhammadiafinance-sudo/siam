@@ -35,7 +35,9 @@ jobs:
         run: |
           npm run build:www
           # stamp the build number so the app can tell when a newer APK is released
-          sed -i "s/const APP_BUILD=0;/const APP_BUILD=${{ github.run_number }};/" www/index.html
+          V=$(tr -d ' \n\r' < version.txt)
+          sed -i "s/const APP_BUILD=0;/const APP_BUILD=${{ github.run_number }};/; s/const APP_VERSION='dev';/const APP_VERSION='$V';/" www/index.html
+          grep -c "const APP_VERSION='$V';" www/index.html
           grep -c "const APP_BUILD=${{ github.run_number }};" www/index.html
           npx cap add android
           npx capacitor-assets generate --android
@@ -44,7 +46,7 @@ jobs:
           sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />#' android/app/src/main/AndroidManifest.xml
           grep -c REQUEST_INSTALL_PACKAGES android/app/src/main/AndroidManifest.xml
           # every build gets a higher version so it installs over the previous one
-          sed -i "s/versionCode 1$/versionCode ${{ github.run_number }}/; s/versionName \"1.0\"/versionName \"1.0.${{ github.run_number }}\"/" android/app/build.gradle
+          sed -i "s/versionCode 1$/versionCode ${{ github.run_number }}/; s/versionName \"1.0\"/versionName \"$(tr -d ' \n\r' < version.txt)\"/" android/app/build.gradle
           grep -n "versionCode\|versionName" android/app/build.gradle
 
       - name: Build APK
@@ -74,5 +76,5 @@ jobs:
           gh release delete apk --yes --cleanup-tag || true
           gh release create apk Sunnah.apk \
             --target "$GITHUB_SHA" \
-            --title "Sunnah - Android APK (build ${{ github.run_number }})" \
+            --title "Sunnah v$(tr -d ' \n\r' < version.txt) - Android APK (build ${{ github.run_number }})" \
             --notes "Download Sunnah.apk on your Android phone and open it to install. Built from ${GITHUB_SHA::7}."

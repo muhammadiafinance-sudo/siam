@@ -625,6 +625,7 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 <script>
 const KEY='remittance_tracker_v1';
 const APP_BUILD=0; // set by the Android build workflow (GitHub run number)
+const APP_VERSION='dev'; // set by the build from version.txt
 const REPO='muhammadiafinance-sudo/siam',APK_URL='https://github.com/'+REPO+'/releases/download/apk/Sunnah.apk';
 const isNative=!!(window.Capacitor&&Capacitor.isNativePlatform&&Capacitor.isNativePlatform());
 if(isNative)document.documentElement.classList.add('native');
@@ -1424,15 +1425,16 @@ async function checkUpdate(manual){
     if(!r.ok)throw new Error('HTTP '+r.status);
     const j=await r.json(),m=/build\s*(\d+)/i.exec(j.name||'');
     const latest=m?+m[1]:0;
-    updInfo=latest>APP_BUILD?{build:latest,date:(j.published_at||'').slice(0,10)}:null;
+    const vm=/v([\d.]+)/i.exec(j.name||'');
+    updInfo=latest>APP_BUILD?{build:latest,ver:vm?vm[1]:'',date:(j.published_at||'').slice(0,10)}:null;
     renderUpdate();
     if(manual)toast(updInfo?'Update available':'You have the latest version');
   }catch(e){if(manual)toast('Could not check for updates');}
 }
 function renderUpdate(){
   const show=updInfo||webUpdate;
-  $('updBar').innerHTML=show?`<div class="upd-bar"><span><b>Update available</b>${updInfo?' · build '+updInfo.build:''}</span><button class="btn btn-p btn-sm" onclick="installUpdate()">${isNative?'Update':'Reload'}</button></div>`:'';
-  const vb=$('verBox');if(vb)vb.innerHTML=`<div class="sync-st">${isNative?'Build '+(APP_BUILD||'dev'):'Web version'}${show?' · <span class="ok" style="color:var(--blue)">update available</span>':''}</div>
+  $('updBar').innerHTML=show?`<div class="upd-bar"><span><b>Update available</b>${updInfo?' · '+(updInfo.ver?'v'+esc(updInfo.ver)+' · ':'')+'build '+updInfo.build:''}</span><button class="btn btn-p btn-sm" onclick="installUpdate()">${isNative?'Update':'Reload'}</button></div>`:'';
+  const vb=$('verBox');if(vb)vb.innerHTML=`<div class="sync-st">${isNative?'Version '+APP_VERSION+' · Build '+(APP_BUILD||'dev'):'Web version'}${show?' · <span class="ok" style="color:var(--blue)">update available</span>':''}</div>
     <button class="btn btn-o btn-sm" onclick="${show?'installUpdate()':'checkUpdate(true)'}">${show?(isNative?'Update now':'Reload'):'Check for updates'}</button>`;
 }
 // Android: download the APK inside the app, then hand it to the system installer (no browser, no Downloads folder).
