@@ -49,10 +49,18 @@ jobs:
 
       - name: Build APK
         run: |
-          # same signing key every build, so updates keep your data
-          mkdir -p ~/.android && cp android-signing/debug.keystore ~/.android/debug.keystore
+          # sign every build with the committed key, so each APK installs as an update over the last one
+          KS="$GITHUB_WORKSPACE/android-signing/debug.keystore"
+          sed -i "0,/^android {/s##android {\n    signingConfigs {\n        debug {\n            storeFile file('$KS')\n            storePassword 'android'\n            keyAlias 'androiddebugkey'\n            keyPassword 'android'\n        }\n    }#" android/app/build.gradle
+          sed -n '1,20p' android/app/build.gradle
           cd android && chmod +x gradlew && ./gradlew --no-daemon assembleDebug
           cp app/build/outputs/apk/debug/app-debug.apk ../Sunnah.apk
+
+      - name: Verify APK signing key
+        run: |
+          APKSIGNER=$(ls -d $ANDROID_HOME/build-tools/*/apksigner | sort -V | tail -1)
+          "$APKSIGNER" verify --print-certs Sunnah.apk | tee certs.txt
+          grep -qi "SHA-256 digest: 0c0c71170b496c0fb22e7be0c5ab0465afdde97d5b0335575b5d13aa6239dd13" certs.txt || { echo "APK is not signed with android-signing/debug.keystore"; exit 1; }
 
       - uses: actions/upload-artifact@v4
         with:
