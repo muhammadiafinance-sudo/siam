@@ -291,6 +291,9 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
 .seg button{flex:1;white-space:nowrap;border:0;background:transparent;padding:10px 6px;border-radius:8px;font-weight:600;font-size:14px;color:var(--muted);cursor:pointer}
 .seg button.on{background:#fff;color:var(--purple);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .tx-a.neu{color:var(--blue)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chips button{border:1px solid var(--line);background:#fff;color:var(--text);border-radius:18px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+.chips button.on{background:var(--navy);border-color:var(--navy);color:#fff}
 /* type-ahead suggestions */
 .sg-wrap{position:relative}
 .sg{position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:80;background:#fff;border:1px solid var(--line);border-radius:10px;
@@ -457,9 +460,9 @@ header{padding-top:calc(12px + var(--safe-area-inset-top,env(safe-area-inset-top
       <div class="row">
         <input type="date" id="hFrom" style="flex:1;min-width:130px">
         <input type="date" id="hTo" style="flex:1;min-width:130px">
-        <select id="hType" style="flex:1;min-width:130px">
-          <option value="">All types</option><option value="credit">Remittance In</option><option value="receive">Fund Receive</option><option value="inc">Incentive Received</option><option value="withdraw">Cash Withdrawal</option><option value="move">Account to Account</option><option value="pay">Paid to Sunnah</option><option value="cross">My Cross</option><option value="cashin">Added to Sunnah</option>
-        </select>
+      </div>
+      <div class="chips" id="hTypes">
+        <button data-t="">All</button><button data-t="credit">Remittance In</button><button data-t="receive">Fund Receive</button><button data-t="inc">Incentive</button><button data-t="withdraw">Cash Withdrawal</button><button data-t="move">Account to Account</button><button data-t="pay">Paid to Sunnah</button><button data-t="cross">My Cross</button><button data-t="cashin">Added to Sunnah</button>
       </div>
       <div class="cards">
         <div class="card"><div class="lbl">Remittance</div><div class="val green" id="hC">0</div></div>
@@ -892,11 +895,11 @@ function renderProfit(){
 }
 
 function renderHistory(){
-  const f=$('hFrom').value,to=$('hTo').value,ty=$('hType').value;
+  const f=$('hFrom').value,to=$('hTo').value,ty=hTypes;
   let c=0,r=0,i=0,w=0,p=0;const rows=[];
   allEvents().forEach(e=>{
     const kk=isCross(e.t)?'cross':e.k;
-    if((f&&e.date<f)||(to&&e.date>to)||(ty&&kk!==ty&&!(ty==='pay'&&kk==='transfer')))return;
+    if((f&&e.date<f)||(to&&e.date>to)||(ty.size&&!ty.has(kk==='transfer'?'pay':kk)))return;
     const a=evAmt(e);
     if(e.k==='credit')c+=a;else if(e.k==='receive')r+=a;else if(e.k==='inc')i+=a;else if(e.k==='withdraw')w+=a;else if((e.k==='pay'&&!isCross(e.t))||e.k==='transfer')p+=a;
     const row=evRow(e,true);row.date=e.date;rows.push(row);
@@ -1171,7 +1174,13 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape')closeSide();});
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{closeSide();if(curAcc)goHome();switchTab(b.dataset.tab);renderHistory();window.scrollTo(0,0);});
 $('accSearch').oninput=renderAccounts;
-['hFrom','hTo','hType'].forEach(id=>$(id).onchange=renderHistory);
+['hFrom','hTo'].forEach(id=>$(id).onchange=renderHistory);
+// history type chips: pick any number; none (or All) = every type
+const hTypes=new Set();
+function paintChips(){document.querySelectorAll('#hTypes button').forEach(b=>b.classList.toggle('on',b.dataset.t?hTypes.has(b.dataset.t):!hTypes.size));}
+$('hTypes').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const t=b.dataset.t;
+  if(!t)hTypes.clear();else hTypes.has(t)?hTypes.delete(t):hTypes.add(t);paintChips();renderHistory();});
+paintChips();
 ['cFrom','cTo'].forEach(id=>$(id).onchange=renderSunnah);
 ['sFrom','sTo'].forEach(id=>$(id).onchange=renderStatement);
 ['pFrom','pTo'].forEach(id=>$(id).onchange=renderProfit);
