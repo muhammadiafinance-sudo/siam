@@ -1426,10 +1426,26 @@ function renderUpdate(){
   const vb=$('verBox');if(vb)vb.innerHTML=`<div class="sync-st">${isNative?'Build '+(APP_BUILD||'dev'):'Web version'}${show?' · <span class="ok" style="color:var(--blue)">update available</span>':''}</div>
     <button class="btn btn-o btn-sm" onclick="${show?'installUpdate()':'checkUpdate(true)'}">${show?(isNative?'Update now':'Reload'):'Check for updates'}</button>`;
 }
-function installUpdate(){
+// Android: download the APK inside the app, then hand it to the system installer (no browser, no Downloads folder).
+let updBusy=false;
+function updMsg(html){$('updBar').innerHTML=`<div class="upd-bar"><span>${html}</span></div>`;}
+async function installUpdate(){
   if(!isNative)return location.reload();
-  if(!confirm('Download the new version?\nWhen the download finishes, tap it and choose Install. Your data stays.'))return;
-  location.href=APK_URL; // opens in the phone's browser, which downloads the APK
+  const P=Capacitor.Plugins,FS=P.Filesystem,FO=P.FileOpener;
+  if(!FS||!FS.downloadFile||!FO){location.href=APK_URL;return;}   // older shells: fall back to the browser
+  if(updBusy)return;updBusy=true;closeModal('setModal');window.scrollTo({top:0,behavior:'smooth'});
+  let sub=null;
+  try{
+    updMsg('<b>Downloading update…</b> 0%');
+    sub=await FS.addListener('progress',p=>{if(p&&p.contentLength)updMsg(`<b>Downloading update…</b> ${Math.min(100,Math.round(p.bytes/p.contentLength*100))}%`);});
+    const r=await FS.downloadFile({url:APK_URL+'?t='+Date.now(),path:'Sunnah-update.apk',directory:'CACHE',progress:true,recursive:true});
+    updMsg('<b>Opening installer…</b> Tap <b>Update</b> / <b>Install</b>');
+    const fp=r.path||(await FS.getUri({path:'Sunnah-update.apk',directory:'CACHE'})).uri;
+    await FO.open({filePath:fp,contentType:'application/vnd.android.package-archive',openWithDefault:true});
+    setTimeout(renderUpdate,4000);
+  }catch(e){
+    toast('Update failed: '+(e&&e.message||e));renderUpdate();
+  }finally{updBusy=false;if(sub&&sub.remove)sub.remove();}
 }
 if(!isNative&&'serviceWorker' in navigator&&location.protocol!=='file:'){
   let hadCtrl=!!navigator.serviceWorker.controller;

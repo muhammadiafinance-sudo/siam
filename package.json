@@ -8,6 +8,7 @@
     "build:firebase": "esbuild src/firebase-entry.js --bundle --minify --format=iife --target=es2019 --outfile=vendor/firebase.js"
   },
   "dependencies": {
+    "@capacitor-community/file-opener": "^8.0.1",
     "@capacitor/android": "8.6.2",
     "@capacitor/app": "8.1.2",
     "@capacitor/core": "8.6.2",
