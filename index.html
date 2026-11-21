@@ -1099,6 +1099,8 @@ function saveTxn(){
 }
 
 /* ---------- tap to show balance ---------- */
+// restart a fade on elements that stay on screen between renders (the summary boxes)
+function balAnim(el,cls){el.classList.remove('bal-in','bal-out');void el.offsetWidth;el.classList.add(cls);}
 function balEls(k){return [...document.querySelectorAll(`.tapbal[data-k="${k}"]`)].map(el=>el.querySelector('b,.val')||el);}
 function countUp(el){
   const txt=el.textContent,m=/([−-]?)([\d,]+(?:\.\d+)?)/.exec(txt);if(!m)return;
@@ -1109,12 +1111,12 @@ function countUp(el){
 function showBal(k){
   clearTimeout(shownBal.get(k));
   shownBal.set(k,setTimeout(()=>{
-    balEls(k).forEach(el=>{el.classList.remove('bal-in');el.classList.add('bal-out');});
-    setTimeout(()=>{shownBal.delete(k);render();balEls(k).forEach(el=>el.classList.add('bal-in'));},120);
+    balEls(k).forEach(el=>balAnim(el,'bal-out'));
+    setTimeout(()=>{shownBal.delete(k);render();balEls(k).forEach(el=>balAnim(el,'bal-in'));},120);
   },10000));
-  render();balEls(k).forEach(el=>el.classList.add('bal-in'));
+  render();balEls(k).forEach(el=>balAnim(el,'bal-in'));
 }
-function hideBal(){if(!shownBal.size)return;shownBal.forEach(t=>clearTimeout(t));shownBal.clear();render();}
+function hideBal(){document.querySelectorAll('.bal-out').forEach(el=>el.classList.remove('bal-out'));if(!shownBal.size)return;shownBal.forEach(t=>clearTimeout(t));shownBal.clear();render();}
 // while hidden, tapping a balance reveals it instead of opening the item underneath
 document.addEventListener('click',e=>{const el=e.target.closest('.tapbal[data-k]');if(el&&balHidden(el.dataset.k)){e.stopPropagation();e.preventDefault();showBal(el.dataset.k);}},true);
 document.addEventListener('visibilitychange',()=>{if(document.hidden){hideBal();awayAt=Date.now();}else if(awayAt&&Date.now()-awayAt>LOCK_AFTER)lockApp();});
